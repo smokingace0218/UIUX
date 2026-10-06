@@ -195,9 +195,9 @@ summary:focus-visible {
 }
 
 .flow-hero__lead {
-  /* the script's ascenders rise about a quarter of its size above its line,
-     so the gap under the lead is a quarter of the name's size, not a fixed step */
-  margin-bottom: clamp(24px, 3.3vw, 62px);
+  /* the name's drawing already includes its tall ascenders, so only a small
+     step separates the lead from the top of the F */
+  margin-bottom: clamp(4px, 0.5vw, 10px);
   color: #c9d0da;
   font-family: var(--font-body);
   font-size: clamp(0.95rem, 1.45vw, 1.6rem);
@@ -211,46 +211,30 @@ summary:focus-visible {
   display: block;
 }
 
-/* the signature word: each letter is a vessel. Two layers are clipped to the
-   letterform: on top, a bright liquid whose wavy surface sits at the letter's
-   fill level and drifts sideways; underneath, the cyan-to-violet gradient,
-   sized to the whole word so the letters read as one continuous sweep. As a
-   letter fills it swells, rising a little from its baseline. */
+/* the signature word: one piece of joined lettering, drawn as SVG so the
+   brush script's connections hold while liquid flows through it */
 .flow-word {
-  /* positioned, so each letter's offsetLeft is measured from the word itself */
   position: relative;
   display: inline-block;
-  padding-right: 0.04em;
+  vertical-align: top;
   font-family: var(--font-display);
-  letter-spacing: 0;
   cursor: default;
 }
 
-.flow-word [data-letter] {
-  --fill: 0;
-  --slosh: 0;
-  --x: 0px;
-  --w: 3em;
-  display: inline-block;
-  /* the brush strokes and swashes reach well past each letter box; grow the
-     painted box to keep them, and take the room back out of the layout */
-  margin: -0.32em -0.24em;
-  padding: 0.32em 0.24em;
-  color: transparent;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 200' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='l' x1='0' x2='0' y1='0.5' y2='1'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='0.06' stop-color='%23d9fff8'/%3E%3Cstop offset='1' stop-color='%2363f2dc'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 100 Q15 91 30 100 T60 100 T90 100 T120 100 V200 H0 Z' fill='url(%23l)'/%3E%3C/svg%3E"),
-    linear-gradient(100deg, var(--tide) 8%, #6fb7ff 48%, var(--violet) 92%);
-  background-repeat: repeat-x, no-repeat;
-  /* the gradient runs past both ends of the word, so the F's lead-in and the
-     w's tail, which swash beyond it, still have colour behind them */
-  background-size: 0.9em 200%, calc(var(--w) + 1.2em) 100%;
-  background-position:
-    calc(var(--slosh) * -0.01em) calc(var(--fill) * 100%),
-    calc(var(--x) * -1 - 0.6em) 0;
-  -webkit-background-clip: text;
-  background-clip: text;
-  transform-origin: 50% 80%;
-  transform: translateY(calc(var(--fill) * -0.03em)) scale(calc(1 + var(--fill) * 0.12));
+.flow-hero__name {
+  line-height: 0;
+}
+
+/* a block exactly the size of the lettering's drawing: no line box around it,
+   so the spacing above and below is only what the headline sets */
+.flow-word__art {
+  display: block;
+  overflow: visible;
+}
+
+.flow-word__text {
+  font-family: var(--font-display);
+  font-size: 100px;
 }
 
 .visually-hidden {
@@ -262,11 +246,22 @@ summary:focus-visible {
   white-space: nowrap;
 }
 
+/* the body copy: the product's line, in the plain sans, a clear step under the name */
+.flow-hero__lede {
+  max-width: 34ch;
+  margin: clamp(14px, 1.6vw, 26px) 0 0;
+  color: #c9d0da;
+  font-size: clamp(1.05rem, 1.4vw, 1.35rem);
+  font-weight: 300;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
 .flow-hero__ctas {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: clamp(28px, 3.4vw, 52px);
+  margin-top: clamp(24px, 2.6vw, 40px);
 }
 
 .flow-hero__note {
@@ -284,6 +279,7 @@ summary:focus-visible {
 
 @media (prefers-reduced-motion: no-preference) {
   .flow-hero__line,
+  .flow-hero__lede,
   .flow-hero__ctas,
   .flow-hero__note {
     animation: flow-rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
@@ -291,6 +287,7 @@ summary:focus-visible {
 
   .flow-hero__line:nth-child(1) { animation-delay: 120ms; }
   .flow-hero__line:nth-child(2) { animation-delay: 220ms; }
+  .flow-hero__lede { animation-delay: 380ms; }
   .flow-hero__ctas { animation-delay: 480ms; }
   .flow-hero__note { animation-delay: 560ms; }
 }
@@ -421,7 +418,7 @@ summary:focus-visible {
   }
 
   .flow-hero__lead {
-    margin-bottom: 7vh;
+    margin-bottom: 4px;
     font-size: 0.85rem;
   }
 

@@ -8,10 +8,10 @@ import dimensionalSource from "../shaders/neuform-isolated/sources/vanguard-dime
    rewrites a copy of it at load time, the same way ThreeUI's own host adapts
    its documents. The authored spheres are rigid: they only bob, so their
    outlines stay perfect arcs. Here their surface flows instead. Slow waves
-   ripple it all the time, and near the cursor it swells softly outward like
-   liquid being drawn, then relaxes when the pointer rests.
-   Everything else (the beams, colours, camera parallax and timing) is the
-   authored effect. */
+   ripple it all the time; near the cursor a bubble swells softly, grows a
+   little and drifts away from the pointer, then floats back when it rests.
+   The beams keep a dim floor of light so the background never empties.
+   The colours, camera parallax and timing are the authored effect. */
 
 // the authored glass vertex shader, replaced whole
 const GLASS_VERTEX = /varying vec3 vNormal;\s*void main\(\) \{\s*vNormal = normalize\(normalMatrix \* normal\);\s*gl_Position = projectionMatrix \* modelViewMatrix \* vec4\(position, 1\.0\);\s*\}/;
@@ -85,6 +85,42 @@ const FRAME_ADDED = `${FRAME_ANCHOR}
                 uniforms.u_pull.value += (liquidGoal - uniforms.u_pull.value) * (1 - Math.exp(-liquidDt / (liquidGoal ? 0.35 : 0.9)));
                 uniforms.u_pointer.value.lerp(liquidTarget, 1 - Math.exp(-liquidDt / 0.12));`;
 
+// the beams: authored, they fade fully out between passes, so the background
+// empties and refills. A floor keeps a dim current of light always present,
+// and the passes swell over it instead of appearing from nothing.
+const BG_BEAM = "float beam = smoothstep(0.2, 0.9, snoise(vec2(st.x + st.y * 2.0 - u_time * 0.1, u_time * 0.03)));";
+const BG_BEAM_STEADY = "float beam = 0.3 + 0.7 * smoothstep(-0.45, 0.9, snoise(vec2(st.x + st.y * 2.0 - u_time * 0.1, u_time * 0.03)));";
+const GLASS_BEAM = "float beam = smoothstep(0.1, 0.9, snoise(vec2(st.x + st.y * 1.8 - u_time * 0.12, u_time * 0.02)));";
+const GLASS_BEAM_STEADY = "float beam = 0.28 + 0.72 * smoothstep(-0.4, 0.9, snoise(vec2(st.x + st.y * 1.8 - u_time * 0.12, u_time * 0.02)));";
+
+// the bubbles drift: a bubble near the cursor eases away from it and grows a
+// little, then floats back and settles when the cursor moves off. Springs are
+// timed in seconds, so the drift is the same at any frame rate.
+const RENDER_ANCHOR = "renderer.render(scene, camera);";
+const RENDER_DRIFT = `spheres.forEach(s => {
+                    if (!s.liquid) s.liquid = { baseX: s.mesh.position.x, baseScale: s.mesh.scale.x, ox: 0, oy: 0, grow: 0 };
+                    const L = s.liquid;
+                    const radius = L.baseScale;
+                    const dx = (L.baseX + L.ox) - uniforms.u_pointer.value.x;
+                    const dy = s.mesh.position.y - uniforms.u_pointer.value.y;
+                    const distance = Math.max(0.001, Math.hypot(dx, dy));
+                    // 1 with the cursor on or inside the bubble's edge, easing to 0 a little way out
+                    const edge = (distance - radius) / (radius * 0.8 + 1.6);
+                    const near = uniforms.u_pull.value * Math.max(0, Math.min(1, 1 - edge)) ** 2;
+                    // strong enough to outweigh the swell toward the cursor, so the bubble reads as drifting away
+                    const push = near * (0.8 + radius * 0.18);
+                    const settle = 1 - Math.exp(-liquidDt / 0.7);
+                    L.ox += ((dx / distance) * push - L.ox) * settle;
+                    L.oy += ((dy / distance) * push - L.oy) * settle;
+                    L.grow += (near - L.grow) * (1 - Math.exp(-liquidDt / 0.5));
+                    s.mesh.position.x = L.baseX + L.ox;
+                    s.mesh.position.y += L.oy;
+                    const size = radius * (1 + 0.07 * L.grow);
+                    s.mesh.scale.set(size, size, size);
+                });
+
+                ${RENDER_ANCHOR}`;
+
 // only the canvas shows; the authored page around it is hidden but left in place
 const ISOLATE_STYLE = `<style>
 html, body { margin: 0 !important; width: 100%; height: 100%; overflow: hidden !important; background: #050608 !important; }
@@ -98,6 +134,9 @@ function liquefy(source: string) {
     [GLASS_VERTEX, LIQUID_VERTEX],
     [POINTER_ANCHOR, POINTER_TRACKING],
     [FRAME_ANCHOR, FRAME_ADDED],
+    [BG_BEAM, BG_BEAM_STEADY],
+    [GLASS_BEAM, GLASS_BEAM_STEADY],
+    [RENDER_ANCHOR, RENDER_DRIFT],
   ];
   let out = source;
   for (const [anchor, replacement] of steps) {
