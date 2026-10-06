@@ -110,6 +110,8 @@ This took the most rounds, and most of the direction came from me.
 
 8. **Connected lettering.** Watching closely, I saw the script's letters break apart during the pour: each letter was a separate piece, and swelling them one by one pulled the joins open. **Flow** is now drawn as one piece of SVG lettering that can't come apart. Its box is fitted to the actual ink (the font reserves a lot of empty space above and below its letters, which had pushed the layout apart).
 9. **Colour that follows the writing.** The liquid rose from the bottom of each letter; I asked for it to flow the way the word is written. A stream now enters at the tip of the F, runs into the l, through the o and out along the w, with a wavy edge slanted like the script, and drains away in the same direction. I also restored the tagline as the body copy under the name.
+10. **Letters that move.** I asked for the letters themselves to flow while the colour passes. A distortion filter frayed the brush edges, so instead the word rides a baseline that rolls as a slow wave: the joined letters sway together and stay crisp.
+11. **A hero that clears itself.** At my request, the tagline, buttons and note come forward while someone moves the cursor and recede after a short pause, leaving only the name over the moving background. They show first for a few seconds on arrival, never hide while a button has keyboard focus, and stay visible on touch screens. The background frame reports pointer movement to the page, since moves over a frame don't reach it otherwise.
 
 Lesson for my workflow: when I ask for a change to one thing (here, the typeface), I need to say explicitly what to keep (the animation). The AI otherwise tends to redo everything.
 
@@ -131,6 +133,7 @@ I noticed the background bubbles were rigid: perfect spheres whose outlines stay
 - Near the cursor, the surface swells softly outward like liquid being drawn, then relaxes when the pointer rests.
 - My first version pulled the surface *toward* the cursor, and I noticed it made the bubbles sharp: a crease formed where the cursor met an edge. Any movement aimed at the cursor's direction flips right at the cursor, so the swell now depends only on distance from it. That keeps the bubbles round and smooth while they react.
 - Following my comments: a bubble near the cursor now drifts away from it, grows slightly and swells smoothly, then floats back. The background's light beams keep a dim floor, so the scene never empties out between passes.
+- I then asked for the bubbles to look like real bubbles. Each one is now clear: it redraws the background behind it, bent through its curved surface like a lens, with a thin-film rainbow rim and a small highlight. The constant wobble was toned down so the outlines stay round arcs and settle back quickly after the cursor leaves.
 - If the source ever changes and the hooks no longer match, it falls back to the original effect instead of breaking.
 
 | At rest | Cursor near the right bubble |
@@ -156,6 +159,9 @@ I noticed the background bubbles were rigid: perfect spheres whose outlines stay
 | Script letters that broke apart during the pour | Spotted the breakage; asked for connected letters |
 | Colour rising from the bottom of each letter | Asked for it to flow F → l → o → w, the way the word is written |
 | Beams that faded out entirely; bubbles that only swelled | Asked for a steady background and bubbles that drift and expand near the cursor |
+| Opaque, lumpy bubbles | Asked for real refraction and round arcs that recover after interaction |
+| Static lettering during the colour flow | Asked for the letters themselves to flow |
+| Buttons and text always on screen | Asked for them to appear with interaction and recede when idle |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection

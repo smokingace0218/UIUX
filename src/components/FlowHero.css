@@ -232,9 +232,9 @@ summary:focus-visible {
   overflow: visible;
 }
 
+/* the size is set on the element in drawing units (see EM in FlowHero) */
 .flow-word__text {
   font-family: var(--font-display);
-  font-size: 100px;
 }
 
 .visually-hidden {
@@ -275,6 +275,28 @@ summary:focus-visible {
   margin-top: 16px;
 }
 
+/* ── recede when idle (driven by useRecedeWhenIdle) ─────────────
+   the supporting text and buttons come forward while someone interacts and
+   recede after a pause; they stay in the layout and remain clickable, so
+   reaching for one brings it straight back */
+.flow-hero__lede,
+.flow-hero__ctas,
+.flow-hero__note {
+  transition:
+    opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter 700ms ease;
+}
+
+.flow-hero[data-idle="true"] .flow-hero__lede,
+.flow-hero[data-idle="true"] .flow-hero__ctas,
+.flow-hero[data-idle="true"] .flow-hero__note {
+  opacity: 0;
+  filter: blur(6px);
+  transform: translateY(10px);
+  transition-duration: 1100ms;
+}
+
 /* ── load sequence ─────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: no-preference) {
@@ -282,7 +304,8 @@ summary:focus-visible {
   .flow-hero__lede,
   .flow-hero__ctas,
   .flow-hero__note {
-    animation: flow-rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    /* backwards only: once in, the elements are free to transition when they recede */
+    animation: flow-rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   }
 
   .flow-hero__line:nth-child(1) { animation-delay: 120ms; }

@@ -33,6 +33,7 @@ function FlowWord() {
   const textRef = useRef<SVGTextElement>(null);
   const surfaceRef = useRef<SVGPathElement>(null);
   const inkRef = useRef<SVGLinearGradientElement>(null);
+  const baselineRef = useRef<SVGPathElement>(null);
   const hovered = useRef(false);
 
   useEffect(() => {
@@ -41,7 +42,8 @@ function FlowWord() {
     const text = textRef.current;
     const surface = surfaceRef.current;
     const ink = inkRef.current;
-    if (!word || !svg || !text || !surface || !ink) return undefined;
+    const baseline = baselineRef.current;
+    if (!word || !svg || !text || !surface || !ink || !baseline) return undefined;
 
     // fit the drawing to where the ink actually is, swashes included. SVG's
     // getBBox reports the font's whole line box, and this script reserves a
@@ -89,14 +91,27 @@ function FlowWord() {
       const bottom = box.y + box.height;
       let down = "";
       let up = "";
-      for (let y = top; y <= bottom + 4; y += 4) {
+      const step = EM / 25;
+      for (let y = top; y <= bottom + step; y += step) {
         down += `${down ? " L" : "M"}${edgeAt(head, y, clock, 0).toFixed(1)} ${y.toFixed(1)}`;
       }
-      for (let y = bottom + 4; y >= top; y -= 4) {
+      for (let y = bottom + step; y >= top; y -= step) {
         up += ` L${edgeAt(tail, y, clock, 1.7).toFixed(1)} ${y.toFixed(1)}`;
       }
       surface.setAttribute("d", `${down}${up} Z`);
     };
+    // the line the word sits on: flat at rest, a travelling wave while it flows
+    const drawBaseline = (live: number, clock: number) => {
+      const length = box.x + box.width + EM;
+      const amplitude = live * 0.045 * EM;
+      let d = "M0 0";
+      for (let x = EM / 20; x <= length; x += EM / 20) {
+        const y = amplitude * Math.sin((x / EM) * 2.6 - clock * 3.2);
+        d += ` L${x.toFixed(1)} ${y.toFixed(2)}`;
+      }
+      baseline.setAttribute("d", d);
+    };
+    drawBaseline(0, 0);
     drawStream(0, 0, 0);
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       return () => document.fonts.removeEventListener("loadingdone", fit);
@@ -122,6 +137,12 @@ function FlowWord() {
           nextRun = clock + POUR.restMin + Math.random() * (POUR.restMax - POUR.restMin);
         }
       }
+
+      // while the stream runs, the lettering itself moves like liquid: the word
+      // rides a baseline that rolls as a slow wave, so the joined letters sway
+      // together and stay crisp vector shapes
+      const live = runTime >= 0 ? Math.sin(Math.PI * Math.min(1, runTime / POUR.run)) : 0;
+      drawBaseline(live, clock);
 
       if (runTime >= 0) {
         // the head runs from before the F's tip to past the w; the tail follows
@@ -169,19 +190,76 @@ function FlowWord() {
           <clipPath id="flow-word-surface">
             <path ref={surfaceRef} />
           </clipPath>
+          {/* the baseline both layers of lettering ride on */}
+          <path ref={baselineRef} id="flow-word-baseline" d="M0 0 L1000 0" />
         </defs>
-        <text ref={textRef} className="flow-word__text" x="0" y="0" fill="url(#flow-word-ink)">{SIGNATURE_WORD}</text>
+        <text ref={textRef} className="flow-word__text" fontSize={EM} fill="url(#flow-word-ink)">
+          <textPath href="#flow-word-baseline">{SIGNATURE_WORD}</textPath>
+        </text>
         {/* the same lettering in liquid, shown only inside the travelling stream */}
-        <text className="flow-word__text" x="0" y="0" fill="url(#flow-word-liquid)" clipPath="url(#flow-word-surface)">{SIGNATURE_WORD}</text>
+        <text className="flow-word__text" fontSize={EM} fill="url(#flow-word-liquid)" clipPath="url(#flow-word-surface)">
+          <textPath href="#flow-word-baseline">{SIGNATURE_WORD}</textPath>
+        </text>
       </svg>
       <span className="visually-hidden">{SIGNATURE_WORD}</span>
     </span>
   );
 }
 
+/* The supporting text and the two buttons come forward while someone is
+   interacting and recede after a short pause, so a still screen shows only
+   the name over the moving background. They show first for a few seconds on
+   arrival, never hide while one of them has keyboard focus, and stay put on
+   touch screens, where there is no cursor to bring them back. */
+const IDLE_MS = 2600;
+const FIRST_SHOW_MS = 4200;
+
+function useRecedeWhenIdle() {
+  const ref = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const section = ref.current;
+    if (!section) return undefined;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return undefined;
+
+    let timer = window.setTimeout(() => recede(), FIRST_SHOW_MS);
+    function recede() {
+      if (section!.querySelector(".flow-hero__ctas:focus-within")) return;
+      section!.dataset.idle = "true";
+    }
+    const wake = () => {
+      delete section.dataset.idle;
+      clearTimeout(timer);
+      timer = window.setTimeout(recede, IDLE_MS);
+    };
+
+    // the background is its own frame, and moves over it never reach this
+    // page, so the frame posts a short message whenever the pointer moves in it
+    const onMessage = (event: MessageEvent) => {
+      if (event.data && event.data.flowPointer === true) wake();
+    };
+
+    window.addEventListener("pointermove", wake, { passive: true });
+    window.addEventListener("keydown", wake);
+    window.addEventListener("wheel", wake, { passive: true });
+    window.addEventListener("message", onMessage);
+    section.addEventListener("focusin", wake);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("pointermove", wake);
+      window.removeEventListener("keydown", wake);
+      window.removeEventListener("wheel", wake);
+      window.removeEventListener("message", onMessage);
+      section.removeEventListener("focusin", wake);
+      delete section.dataset.idle;
+    };
+  }, []);
+  return ref;
+}
+
 export function FlowHero() {
+  const sectionRef = useRecedeWhenIdle();
   return (
-    <section className="flow-hero" aria-labelledby="flow-hero-title">
+    <section ref={sectionRef} className="flow-hero" aria-labelledby="flow-hero-title">
       {/* decorative background: the pointer still reaches it, so the camera keeps its
           authored parallax and the liquid bubbles can reach toward the cursor */}
       <div className="flow-hero__bg shader-frame" aria-hidden="true">

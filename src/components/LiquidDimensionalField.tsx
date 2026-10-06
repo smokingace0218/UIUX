@@ -10,6 +10,8 @@ import dimensionalSource from "../shaders/neuform-isolated/sources/vanguard-dime
    outlines stay perfect arcs. Here their surface flows instead. Slow waves
    ripple it all the time; near the cursor a bubble swells softly, grows a
    little and drifts away from the pointer, then floats back when it rests.
+   The bubbles are clear, refracting the background through their curved
+   surface with a thin-film rim and a highlight, like real bubbles.
    The beams keep a dim floor of light so the background never empties.
    The colours, camera parallax and timing are the authored effect. */
 
@@ -30,9 +32,10 @@ const LIQUID_VERTEX = `uniform float u_time;
 
                     void main() {
                         float t = u_time;
-                        // a liquid surface: each point rides out and in along its normal
-                        float w = wobble(position, t);
-                        vec3 p = position + normal * 0.11 * w;
+                        // a liquid surface: each point rides gently out and in along its
+                        // normal, enough to keep the outline alive while it stays a round arc
+                        float w = wobble(position, t * 0.8);
+                        vec3 p = position + normal * 0.045 * w;
                         vec4 world = modelMatrix * vec4(p, 1.0);
 
                         // drawn toward the pointer as a broad, soft swell: the surface moves
@@ -62,6 +65,7 @@ const POINTER_ANCHOR = "const resize = () => {";
 const POINTER_TRACKING = `// liquid: where the pointer is in the scene, and whether it is in play
             const liquidTarget = new THREE.Vector3();
             let liquidLastMove = -1e9;
+            let liquidLastPost = -1e9;
             let liquidLastFrame = performance.now();
             document.addEventListener('mousemove', (event) => {
                 const ray = new THREE.Vector3((event.clientX / window.innerWidth) * 2 - 1, -(event.clientY / window.innerHeight) * 2 + 1, 0.5);
@@ -69,6 +73,11 @@ const POINTER_TRACKING = `// liquid: where the pointer is in the scene, and whet
                 const distance = -camera.position.z / ray.z;
                 liquidTarget.copy(camera.position).add(ray.multiplyScalar(distance));
                 liquidLastMove = performance.now();
+                // tell the host page the pointer is moving, at most a few times a second
+                if (liquidLastMove - liquidLastPost > 200 && window.parent !== window) {
+                    liquidLastPost = liquidLastMove;
+                    window.parent.postMessage({ flowPointer: true }, '*');
+                }
             });
             document.documentElement.addEventListener('mouseleave', () => { liquidLastMove = -1e9; });
 
@@ -81,8 +90,8 @@ const FRAME_ADDED = `${FRAME_ANCHOR}
                 const liquidNow = performance.now();
                 const liquidDt = Math.min(0.1, (liquidNow - liquidLastFrame) / 1000);
                 liquidLastFrame = liquidNow;
-                const liquidGoal = liquidNow - liquidLastMove < 2500 ? 1 : 0;
-                uniforms.u_pull.value += (liquidGoal - uniforms.u_pull.value) * (1 - Math.exp(-liquidDt / (liquidGoal ? 0.35 : 0.9)));
+                const liquidGoal = liquidNow - liquidLastMove < 1200 ? 1 : 0;
+                uniforms.u_pull.value += (liquidGoal - uniforms.u_pull.value) * (1 - Math.exp(-liquidDt / (liquidGoal ? 0.35 : 0.6)));
                 uniforms.u_pointer.value.lerp(liquidTarget, 1 - Math.exp(-liquidDt / 0.12));`;
 
 // the beams: authored, they fade fully out between passes, so the background
@@ -90,8 +99,53 @@ const FRAME_ADDED = `${FRAME_ANCHOR}
 // and the passes swell over it instead of appearing from nothing.
 const BG_BEAM = "float beam = smoothstep(0.2, 0.9, snoise(vec2(st.x + st.y * 2.0 - u_time * 0.1, u_time * 0.03)));";
 const BG_BEAM_STEADY = "float beam = 0.3 + 0.7 * smoothstep(-0.45, 0.9, snoise(vec2(st.x + st.y * 2.0 - u_time * 0.1, u_time * 0.03)));";
-const GLASS_BEAM = "float beam = smoothstep(0.1, 0.9, snoise(vec2(st.x + st.y * 1.8 - u_time * 0.12, u_time * 0.02)));";
-const GLASS_BEAM_STEADY = "float beam = 0.28 + 0.72 * smoothstep(-0.4, 0.9, snoise(vec2(st.x + st.y * 1.8 - u_time * 0.12, u_time * 0.02)));";
+
+// the bubbles, as real bubbles. Authored, each one paints its own opaque beam
+// pattern. Here a bubble is clear: it redraws the background field behind it,
+// sampled through its curved surface so the scene bends and magnifies toward
+// the rim like a lens, then adds a thin-film rim whose colours shift with the
+// viewing angle and a soft window highlight. The field function is the
+// background shader's own, so what shows through matches what is behind.
+const GLASS_FRAGMENT = /varying vec3 vNormal;\s*\$\{snoiseLogic\}\s*void main\(\) \{[\s\S]*?gl_FragColor = vec4\(finalColor, 0\.95\);\s*\}/;
+const GLASS_REFRACTION = `varying vec3 vNormal;
+                    \${snoiseLogic}
+
+                    // the background at a point on screen: the same steps as the background shader
+                    vec3 fieldAt(vec2 screen) {
+                        vec2 uv = screen;
+                        uv.x *= u_resolution.x / u_resolution.y;
+                        vec3 baseColor = vec3(0.02, 0.02, 0.03);
+                        vec2 st = uv * 0.5;
+                        st += vec2(snoise(st + u_time * 0.04), snoise(st - u_time * 0.04)) * 0.4;
+                        float beam = 0.3 + 0.7 * smoothstep(-0.45, 0.9, snoise(vec2(st.x + st.y * 2.0 - u_time * 0.1, u_time * 0.03)));
+                        vec3 glow = mix(u_color1, u_color2, snoise(uv * 2.0 + u_time * 0.15) * 0.5 + 0.5);
+                        float vignette = smoothstep(1.5, 0.1, distance(screen, vec2(0.5)));
+                        return mix(vec3(0.01, 0.01, 0.015), mix(baseColor, glow, beam * 0.6), vignette);
+                    }
+
+                    void main() {
+                        vec2 screen = gl_FragCoord.xy / u_resolution.xy;
+                        vec3 n = normalize(vNormal);
+                        float facing = clamp(n.z, 0.0, 1.0);
+                        float fresnel = pow(1.0 - facing, 2.2);
+
+                        // refraction: the view through the bubble bends, more toward the rim
+                        vec2 bend = n.xy * (0.05 + 0.12 * fresnel);
+                        vec3 behind = fieldAt(screen - bend);
+
+                        // thin film: colours that shift with the viewing angle and drift slowly
+                        vec3 film = 0.5 + 0.5 * cos(6.2831 * (fresnel * 1.35 + u_time * 0.035 + vec3(0.0, 0.33, 0.67)));
+                        film = mix(film, vec3(1.0), 0.2);
+                        vec3 rim = film * fresnel * 0.38 + mix(u_color1, u_color2, 0.5) * fresnel * 0.16;
+
+                        // a soft window highlight up and to the left, and a faint one opposite
+                        float spec = pow(max(dot(n, normalize(vec3(-0.45, 0.55, 0.7))), 0.0), 220.0) * 0.75
+                                   + pow(max(dot(n, normalize(vec3(0.5, -0.45, 0.75))), 0.0), 60.0) * 0.08;
+
+                        // the clear centre lets the scene through almost untouched, a touch brighter
+                        vec3 color = behind * (0.95 + 0.12 * facing) + rim + vec3(spec);
+                        gl_FragColor = vec4(color, 1.0);
+                    }`;
 
 // the bubbles drift: a bubble near the cursor eases away from it and grows a
 // little, then floats back and settles when the cursor moves off. Springs are
@@ -135,7 +189,7 @@ function liquefy(source: string) {
     [POINTER_ANCHOR, POINTER_TRACKING],
     [FRAME_ANCHOR, FRAME_ADDED],
     [BG_BEAM, BG_BEAM_STEADY],
-    [GLASS_BEAM, GLASS_BEAM_STEADY],
+    [GLASS_FRAGMENT, GLASS_REFRACTION],
     [RENDER_ANCHOR, RENDER_DRIFT],
   ];
   let out = source;
