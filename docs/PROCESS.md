@@ -159,6 +159,7 @@ I wrote out the full sequence I wanted: the page opens loud, and the visitor's o
 ### 10. Final touches
 
 - The line under the buttons ("Free for personal use. No card needed.") was removed.
+- The logo's gliding water drop now also rides the front of the colour as it pours through the large "Flow", F to w, fused with its trailing droplet the same way.
 - All three visible bubbles were given some free movement: each wanders slowly within its own area, on unrelated rhythms so it never quite repeats, on top of the existing cursor response and the noise-to-Flow current. The large bubble sways gently and the small one roams furthest.
 - Clicking the logo now reloads the page, replaying the arrival and the noise-to-Flow sequence. Before, it linked to the site root, which on the preview host opened a "not found" page.
 - The published preview is a single bundle, checked on first load, on repeated reloads and after a logo click.

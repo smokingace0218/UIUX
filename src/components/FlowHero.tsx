@@ -21,6 +21,10 @@ const POUR = {
   firstDelay: 1.3, // lets the headline finish arriving first
 };
 const EM = 100; // the lettering is drawn at 100 user units to the em
+/* the logo's water drop, carried at the front of the pour: where it rides on
+   each letter, as a fraction of the ink height (the ascenders of F and l sit
+   high, the bowls of o and w lower), matching the logo */
+const DROP_LANDING = [0.2, 0.12, 0.46, 0.46];
 
 function smooth(x: number) {
   const t = Math.min(1, Math.max(0, x));
@@ -34,6 +38,9 @@ function FlowWord() {
   const surfaceRef = useRef<SVGPathElement>(null);
   const inkRef = useRef<SVGLinearGradientElement>(null);
   const baselineRef = useRef<SVGPathElement>(null);
+  const dropRef = useRef<SVGCircleElement>(null);
+  const dropTailRef = useRef<SVGCircleElement>(null);
+  const dropLayerRef = useRef<SVGGElement>(null);
   const hovered = useRef(false);
 
   useEffect(() => {
@@ -43,13 +50,18 @@ function FlowWord() {
     const surface = surfaceRef.current;
     const ink = inkRef.current;
     const baseline = baselineRef.current;
-    if (!word || !svg || !text || !surface || !ink || !baseline) return undefined;
+    const drop = dropRef.current;
+    const dropTail = dropTailRef.current;
+    const dropLayer = dropLayerRef.current;
+    if (!word || !svg || !text || !surface || !ink || !baseline || !drop || !dropTail || !dropLayer) return undefined;
 
     // fit the drawing to where the ink actually is, swashes included. SVG's
     // getBBox reports the font's whole line box, and this script reserves a
     // lot of empty room above and below its letters; canvas text metrics give
     // the true extent of the strokes.
     let box = { x: 0, y: -EM, width: 2.6 * EM, height: 1.3 * EM };
+    // where the drop rides on each letter, in the drawing's own units
+    let spots: { x: number; y: number }[] = [];
     const measure = document.createElement("canvas").getContext("2d");
     const fit = () => {
       if (!measure) return;
@@ -69,6 +81,12 @@ function FlowWord() {
       svg.style.height = `${box.height / EM}em`;
       ink.setAttribute("x1", String(box.x));
       ink.setAttribute("x2", String(box.x + box.width));
+      // each letter's centre from the advance of the text before it
+      spots = SIGNATURE_WORD.split("").map((letter, index) => {
+        const before = measure.measureText(SIGNATURE_WORD.slice(0, index)).width;
+        const own = measure.measureText(letter).width;
+        return { x: before + own * 0.55, y: box.y + box.height * DROP_LANDING[index] };
+      });
     };
     fit();
     document.fonts.ready.then(fit);
@@ -117,6 +135,38 @@ function FlowWord() {
       return () => document.fonts.removeEventListener("loadingdone", fit);
     }
 
+    // the drop glides at the front of the colour, F to w, its height following
+    // the letters smoothly; a lagging droplet and the goo filter draw the pair
+    // into one long drop, as in the logo
+    let tailX = 0;
+    let tailY = 0;
+    const drawDrop = (front: number | null, clock: number, dt: number) => {
+      if (front === null || spots.length < 2) {
+        dropLayer.style.opacity = "0";
+        return;
+      }
+      const first = spots[0];
+      const lastSpot = spots[spots.length - 1];
+      const span = lastSpot.x - first.x;
+      const along = Math.min(spots.length - 1.001, Math.max(0, ((front - first.x) / span) * (spots.length - 1)));
+      const k = Math.floor(along);
+      const y = spots[k].y + (spots[k + 1].y - spots[k].y) * smooth(along - k);
+      // sit just behind the leading edge of the colour at this height
+      const x = edgeAt(front, y, clock, 0) - EM * 0.09;
+      const fade = Math.min(1, (x - (first.x - span * 0.2)) / (span * 0.15), (lastSpot.x + span * 0.2 - x) / (span * 0.15));
+      if (dropLayer.style.opacity === "0" || dropLayer.style.opacity === "") {
+        tailX = x;
+        tailY = y;
+      }
+      tailX += (x - tailX) * (1 - Math.exp(-dt / 0.06));
+      tailY += (y - tailY) * (1 - Math.exp(-dt / 0.06));
+      drop.setAttribute("cx", x.toFixed(2));
+      drop.setAttribute("cy", y.toFixed(2));
+      dropTail.setAttribute("cx", tailX.toFixed(2));
+      dropTail.setAttribute("cy", tailY.toFixed(2));
+      dropLayer.style.opacity = Math.max(0.001, Math.min(1, fade)).toFixed(3);
+    };
+
     let runTime = -1; // seconds into the current pour, or -1 when resting
     let nextRun = POUR.firstDelay;
     let clock = 0;
@@ -154,8 +204,10 @@ function FlowWord() {
         const head = start + span * smooth(p / 0.72);
         const tail = start + span * smooth((p - 0.3) / 0.7);
         drawStream(head, tail, clock);
+        drawDrop(head, clock, dt);
       } else {
         drawStream(0, 0, clock);
+        drawDrop(null, clock, dt);
       }
       frame = requestAnimationFrame(tick);
     };
@@ -190,6 +242,15 @@ function FlowWord() {
           <clipPath id="flow-word-surface">
             <path ref={surfaceRef} />
           </clipPath>
+          {/* the logo's goo: blur the drop and its droplet together, then cut the alpha sharply */}
+          <filter id="flow-word-goo" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="soft" />
+            <feColorMatrix in="soft" mode="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -8" />
+          </filter>
+          <linearGradient id="flow-word-drop" x1="0" x2="1" y1="0" y2="1">
+            <stop stopColor="#5ff5df" />
+            <stop offset="1" stopColor="#6fb7ff" />
+          </linearGradient>
           {/* the baseline both layers of lettering ride on */}
           <path ref={baselineRef} id="flow-word-baseline" d="M0 0 L1000 0" />
         </defs>
@@ -200,6 +261,10 @@ function FlowWord() {
         <text className="flow-word__text" fontSize={EM} fill="url(#flow-word-liquid)" clipPath="url(#flow-word-surface)">
           <textPath href="#flow-word-baseline">{SIGNATURE_WORD}</textPath>
         </text>
+        <g ref={dropLayerRef} filter="url(#flow-word-goo)" style={{ opacity: 0 }}>
+          <circle ref={dropTailRef} r={EM * 0.045} fill="url(#flow-word-drop)" />
+          <circle ref={dropRef} r={EM * 0.066} fill="url(#flow-word-drop)" />
+        </g>
       </svg>
       <span className="visually-hidden">{SIGNATURE_WORD}</span>
     </span>
