@@ -1,0 +1,589 @@
+.flow-hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: 1fr;
+  min-height: max(100dvh, 640px);
+  padding-top: 84px;
+  overflow: hidden;
+  background: var(--void);
+  /* the layer above the shader lets the pointer through to it; only things
+     you can click opt back in */
+  pointer-events: none;
+}
+
+.flow-hero a,
+.flow-word {
+  pointer-events: auto;
+}
+
+/* the shader reads the pointer itself (its camera follows the cursor), so it
+   opts back in; the text layer above passes every move through to it */
+.flow-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  pointer-events: auto;
+  overflow: hidden;
+  background: var(--void);
+}
+
+/* keeps the copy readable over the brightest beams without hiding the spheres */
+.flow-hero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(5, 6, 8, 0.72) 0%, rgba(5, 6, 8, 0.38) 42%, rgba(5, 6, 8, 0) 70%),
+    linear-gradient(180deg, rgba(5, 6, 8, 0.5) 0%, rgba(5, 6, 8, 0) 18%, rgba(5, 6, 8, 0) 78%, rgba(5, 6, 8, 0.6) 100%);
+}
+
+/* ── navigation ────────────────────────────────────────────── */
+
+/* sits over the top of the hero */
+.flow-nav {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) clamp(16px, 4vw, 56px) 18px;
+}
+
+.flow-nav a:not(.flow-button),
+.flow-nav button {
+  color: inherit;
+  text-decoration: none;
+}
+
+.flow-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
+}
+
+.flow-nav__links {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(10, 12, 16, 0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.flow-nav__links a {
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: var(--mist);
+  font-size: 0.875rem;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.flow-nav__links a:hover {
+  color: var(--ink);
+  background: rgba(238, 242, 244, 0.06);
+}
+
+.flow-nav__actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.flow-nav__signin {
+  color: var(--mist) !important;
+  font-size: 0.875rem;
+  transition: color 160ms ease;
+}
+
+.flow-nav__signin:hover {
+  color: var(--ink) !important;
+}
+
+.flow-nav__menu {
+  display: none;
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(10, 12, 16, 0.5);
+  font: 500 0.75rem / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.flow-nav__sheet {
+  display: none;
+}
+
+/* ── buttons ───────────────────────────────────────────────── */
+
+.flow-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 26px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--void);
+  background: var(--ink);
+  font: 500 0.95rem / 1 var(--font-body);
+  text-decoration: none;
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), background 180ms ease, box-shadow 180ms ease;
+}
+
+.flow-button:hover {
+  background: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* on hover, a hairline of the Flow gradient (teal, sky, violet) draws around
+   the primary button, a few pixels out, with the faintest matching halo.
+   It stays thin and low so the button keeps its weight. */
+.flow-button:not(.flow-button--glass) {
+  position: relative;
+  isolation: isolate;
+}
+
+.flow-button:not(.flow-button--glass)::before,
+.flow-button:not(.flow-button--glass)::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(100deg, #19d9bf, #6fb7ff 50%, #7a3cff);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms ease;
+}
+
+/* the ring: the gradient masked down to a 1.5px band */
+.flow-button:not(.flow-button--glass)::before {
+  padding: 1.5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* the halo: the same gradient, blurred well out and kept faint */
+.flow-button:not(.flow-button--glass)::after {
+  inset: -2px;
+  filter: blur(14px);
+}
+
+.flow-button:not(.flow-button--glass):hover::before,
+.flow-button:not(.flow-button--glass):focus-visible::before {
+  opacity: 0.9;
+}
+
+.flow-button:not(.flow-button--glass):hover::after,
+.flow-button:not(.flow-button--glass):focus-visible::after {
+  opacity: 0.22;
+}
+
+.flow-button--small {
+  min-height: 38px;
+  padding: 0 18px;
+  font-size: 0.875rem;
+}
+
+.flow-button--glass {
+  border-color: var(--line);
+  color: var(--ink);
+  background: rgba(238, 242, 244, 0.06);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+.flow-button--glass:hover {
+  background: rgba(238, 242, 244, 0.12);
+  box-shadow: none;
+}
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--tide);
+  outline-offset: 3px;
+}
+
+/* ── headline and copy ─────────────────────────────────────── */
+
+.flow-hero__content {
+  align-self: center;
+  max-width: 900px;
+  padding: 48px clamp(16px, 6vw, 96px);
+}
+
+/* a two-voice headline: "Let your work" as a small line of widely tracked
+   capitals, the way Butter sets its interface type, leading into the name
+   itself, large, in the logo's brush script. The size gap does the pairing:
+   the lead is quiet and upright, the name is loud and slanted, so they never
+   compete. Sizes run on one scale: the lead is about a ninth of the name. */
+.flow-hero__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(7.5rem, 16.5vw, 19rem);
+  font-weight: 400;
+  line-height: 0.82;
+}
+
+.flow-hero__lead {
+  /* the name's drawing already includes its tall ascenders, so only a small
+     step separates the lead from the top of the F */
+  margin-bottom: clamp(4px, 0.5vw, 10px);
+  color: #c9d0da;
+  font-family: var(--font-body);
+  font-size: clamp(0.95rem, 1.45vw, 1.6rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+}
+
+.flow-hero__line {
+  display: block;
+}
+
+/* the signature word: one piece of joined lettering, drawn as SVG so the
+   brush script's connections hold while liquid flows through it */
+.flow-word {
+  position: relative;
+  display: inline-block;
+  vertical-align: top;
+  font-family: var(--font-display);
+  cursor: default;
+}
+
+.flow-hero__name {
+  line-height: 0;
+}
+
+/* a block exactly the size of the lettering's drawing: no line box around it,
+   so the spacing above and below is only what the headline sets */
+.flow-word__art {
+  display: block;
+  overflow: visible;
+}
+
+/* the size is set on the element in drawing units (see EM in FlowHero) */
+.flow-word__text {
+  font-family: var(--font-display);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* the body copy: the product's line, in the plain sans, a clear step under the name */
+.flow-hero__lede {
+  max-width: 34ch;
+  margin: clamp(14px, 1.6vw, 26px) 0 0;
+  color: #c9d0da;
+  font-size: clamp(1.05rem, 1.4vw, 1.35rem);
+  font-weight: 300;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.flow-hero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: clamp(24px, 2.6vw, 40px);
+}
+
+.flow-hero__note {
+  margin: 0;
+  color: var(--mist);
+  font: 400 0.75rem / 1.5 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.flow-hero__note {
+  margin-top: 16px;
+}
+
+/* ── order: from noise to Flow (driven by useFlowOrder) ───────
+   --order runs 0 to 1. The body copy starts dim behind the refraction and
+   comes clear; Get Started is present throughout and becomes the strongest
+   element once the scene settles, while the secondary button steps back. */
+.flow-hero {
+  --order: 1;
+}
+
+.flow-hero__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.flow-hero__lede {
+  opacity: calc(0.42 + var(--order) * 0.58);
+}
+
+.flow-hero__note {
+  opacity: calc(var(--order) * 1);
+}
+
+.flow-hero__ctas .flow-button {
+  transition:
+    transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 900ms ease,
+    opacity 900ms ease,
+    background 180ms ease;
+}
+
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button:first-child {
+  box-shadow:
+    0 0 34px rgba(25, 217, 191, 0.45),
+    0 14px 40px -12px rgba(122, 60, 255, 0.6);
+  transform: scale(1.06);
+}
+
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button:first-child:hover {
+  transform: scale(1.06) translateY(-1px);
+}
+
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button--glass {
+  opacity: 0.62;
+}
+
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button--glass:hover,
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button--glass:focus-visible {
+  opacity: 1;
+}
+
+/* ── load sequence ─────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+  .flow-hero__line,
+  .flow-hero__lede,
+  .flow-hero__ctas,
+  .flow-hero__note {
+    /* backwards only: once in, the elements are free to change with --order */
+    animation: flow-rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  }
+
+  .flow-hero__line:nth-child(1) { animation-delay: 120ms; }
+  .flow-hero__line:nth-child(2) { animation-delay: 220ms; }
+  .flow-hero__lede { animation-delay: 380ms; }
+  .flow-hero__ctas { animation-delay: 480ms; }
+  .flow-hero__note { animation-delay: 560ms; }
+}
+
+@keyframes flow-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* ── small screens ─────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  .flow-nav__links,
+  .flow-nav__signin {
+    display: none;
+  }
+
+  .flow-nav__menu {
+    display: inline-flex;
+  }
+
+  .flow-nav__sheet[data-open="true"] {
+    position: absolute;
+    top: 100%;
+    right: 16px;
+    left: 16px;
+    display: grid;
+    gap: 2px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: #0a0c10;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    pointer-events: auto;
+  }
+
+  .flow-nav__sheet a:not(.flow-button) {
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 1rem;
+  }
+
+  .flow-nav__sheet .flow-button {
+    margin-top: 8px;
+  }
+
+  .flow-nav__sheet a:not(.flow-button):hover {
+    background: rgba(238, 242, 244, 0.06);
+  }
+
+  .flow-hero__scrim {
+    background: linear-gradient(180deg, rgba(5, 6, 8, 0.55) 0%, rgba(5, 6, 8, 0.35) 40%, rgba(5, 6, 8, 0.75) 100%);
+  }
+
+  .flow-hero__content {
+    align-self: end;
+  }
+}
+
+@media (max-width: 480px) {
+  .flow-nav .flow-button--small {
+    display: none;
+  }
+
+  .flow-hero__ctas .flow-button {
+    flex: 1 1 100%;
+  }
+}
+
+/* ── very wide screens: the copy grows with the canvas ─────── */
+
+@media (min-width: 1800px) {
+  .flow-nav__brand {
+    font-size: 1.6rem;
+  }
+
+  .flow-nav__links a,
+  .flow-nav__signin {
+    font-size: 1rem;
+  }
+
+  .flow-nav .flow-button--small {
+    min-height: 46px;
+    padding: 0 24px;
+    font-size: 1rem;
+  }
+
+  .flow-hero__content {
+    max-width: 1280px;
+  }
+
+
+  .flow-hero__ctas .flow-button {
+    min-height: 56px;
+    padding: 0 32px;
+    font-size: 1.05rem;
+  }
+
+  .flow-hero__note {
+    font-size: 0.85rem;
+  }
+}
+
+/* ── short screens (phones held sideways): size by height ──── */
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .flow-hero {
+    min-height: 100dvh;
+    padding-top: 72px;
+  }
+
+  .flow-nav {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .flow-hero__content {
+    align-self: center;
+    padding-top: 8px;
+    padding-bottom: 24px;
+  }
+
+  .flow-hero__title {
+    font-size: clamp(4.5rem, 34vh, 9rem);
+  }
+
+  .flow-hero__lead {
+    margin-bottom: 4px;
+    font-size: 0.85rem;
+  }
+
+
+  .flow-hero__ctas {
+    margin-top: 18px;
+  }
+
+  .flow-hero__ctas .flow-button {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+
+  .flow-hero__note {
+    margin-top: 10px;
+  }
+}
+
+/* ── logo: a brush-script wordmark; on hover a drop glides through it (FlowLogo) ── */
+
+.flow-logo {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.flow-logo__word {
+  display: inline-flex;
+  align-items: baseline;
+  /* the script overhangs its box on both sides, so give the flourishes room */
+  padding: 0.06em 0.18em 0.1em 0.04em;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 1.95em;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  /* a hairline of its own colour thickens the brush toward a heavier wordmark */
+  -webkit-text-stroke: 0.035em currentColor;
+  paint-order: stroke fill;
+}
+
+/* the logo rests in plain white. On hover it takes the headline's colours:
+   each letter fills, F first, as the drop reaches it, with the hue the "Flow"
+   gradient has at that point (F teal through w violet), and stays filled while
+   hovered. The letter under the drop glows and lifts a hair. On leave the
+   colour drains back to white. */
+.flow-logo__word [data-letter] {
+  --lit: 0;
+  --fill: 0;
+  --hue: #28d3ca;
+  display: inline-block;
+  color: color-mix(in srgb, var(--hue) calc(var(--fill) * 100%), var(--ink));
+  text-shadow: 0 0 calc(var(--lit) * 0.35em) color-mix(in srgb, var(--hue) calc(var(--lit) * 70%), transparent);
+  transform: translateY(calc(var(--lit) * -0.03em));
+}
+
+.flow-logo__word [data-letter]:nth-child(2) { --hue: #59c0ee; }
+.flow-logo__word [data-letter]:nth-child(3) { --hue: #7297ff; }
+.flow-logo__word [data-letter]:nth-child(4) { --hue: #7851ff; }
+
+/* the drop layer shares the logo's coordinates; the drop arcs above the
+   letters, outside this box, so it must not clip */
+.flow-logo__drops {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}

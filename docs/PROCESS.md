@@ -169,7 +169,7 @@ To compare against the version above (left untouched), I asked for a variant tha
 
 ### 11. The logo's drop on the headline, and a travelling bubble
 
-Two refinements, on both pages:
+Two refinements. I first applied them to both pages, then decided to keep the main hero exactly as it stood before the variant (Version 17), so these now live only in the lens variant; the main page's code is kept as it was in `src/original`:
 
 - **The drop on "Flow":** the logo's gliding water drop now rides the front of the colour as it pours through the large lettering, F to w, its height following the letters, with the same goo filter fusing it and its trailing droplet into one drawn-out drop.
 - **The small bubble travels:** the small upper bubble used to be pushed away from the cursor, so it slid off to the left. It now follows its own slow loop, a closed Catmull-Rom curve through the hero: from above and right of the headline, past the w of Flow, down to skim "without the noise.", toward the large bubble, then away and back up. It moves with mass: a damped spring behind its path point, a pace that eases up and down, a faint drift so no loop repeats exactly, and a slight stretch along its motion when it turns.
