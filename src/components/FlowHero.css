@@ -275,26 +275,56 @@ summary:focus-visible {
   margin-top: 16px;
 }
 
-/* ── recede when idle (driven by useRecedeWhenIdle) ─────────────
-   the supporting text and buttons come forward while someone interacts and
-   recede after a pause; they stay in the layout and remain clickable, so
-   reaching for one brings it straight back */
-.flow-hero__lede,
-.flow-hero__ctas,
-.flow-hero__note {
-  transition:
-    opacity 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1),
-    filter 700ms ease;
+/* ── order: from noise to Flow (driven by useFlowOrder) ───────
+   --order runs 0 to 1. The body copy starts dim behind the refraction and
+   comes clear; Get Started is present throughout and becomes the strongest
+   element once the scene settles, while the secondary button steps back. */
+.flow-hero {
+  --order: 1;
 }
 
-.flow-hero[data-idle="true"] .flow-hero__lede,
-.flow-hero[data-idle="true"] .flow-hero__ctas,
-.flow-hero[data-idle="true"] .flow-hero__note {
-  opacity: 0;
-  filter: blur(6px);
-  transform: translateY(10px);
-  transition-duration: 1100ms;
+.flow-hero__defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.flow-hero__lede {
+  opacity: calc(0.42 + var(--order) * 0.58);
+}
+
+.flow-hero__note {
+  opacity: calc(var(--order) * 1);
+}
+
+.flow-hero__ctas .flow-button {
+  transition:
+    transform 900ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 900ms ease,
+    opacity 900ms ease,
+    background 180ms ease;
+}
+
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button:first-child {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.6),
+    0 0 34px rgba(25, 217, 191, 0.45),
+    0 14px 40px -12px rgba(122, 60, 255, 0.6);
+  transform: scale(1.06);
+}
+
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button:first-child:hover {
+  transform: scale(1.06) translateY(-1px);
+}
+
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button--glass {
+  opacity: 0.62;
+}
+
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button--glass:hover,
+.flow-hero[data-state="flow"] .flow-hero__ctas .flow-button--glass:focus-visible {
+  opacity: 1;
 }
 
 /* ── load sequence ─────────────────────────────────────────── */
@@ -304,7 +334,7 @@ summary:focus-visible {
   .flow-hero__lede,
   .flow-hero__ctas,
   .flow-hero__note {
-    /* backwards only: once in, the elements are free to transition when they recede */
+    /* backwards only: once in, the elements are free to change with --order */
     animation: flow-rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
   }
 

@@ -206,58 +206,158 @@ function FlowWord() {
   );
 }
 
-/* The supporting text and the two buttons come forward while someone is
-   interacting and recede after a short pause, so a still screen shows only
-   the name over the moving background. They show first for a few seconds on
-   arrival, never hide while one of them has keyboard focus, and stay put on
-   touch screens, where there is no cursor to bring them back. */
-const IDLE_MS = 2600;
-const FIRST_SHOW_MS = 4200;
+/* The hero tells Flow's promise by changing behaviour, not content.
 
-function useRecedeWhenIdle() {
+   One value, "order", runs from 0 to 1. At 0 the scene is noise: the bubbles
+   move independently, the field churns, and the body copy sits behind the
+   refraction, warped, softened and dim. As someone moves the cursor through
+   the hero, order rises: the bubbles fall into one shared current, the field
+   calms, the distortion settles and the sentence comes clear. At 1 the hero
+   locks into its final state and Get Started becomes the strongest thing on
+   the screen.
+
+   independent motion = noise, coordinated motion = Flow,
+   clarity = everything you need, without the noise.
+
+   Order rises only while the pointer is moving and sinks back slowly if the
+   visitor stops partway. Keyboard focus on a button jumps straight to the end
+   so nobody has to wave a mouse to reach it; reduced motion starts there; and
+   on touch screens, with no cursor, it resolves on its own after a beat. The
+   value is shared with the background frame, which drives the bubbles and
+   the field from it. */
+const ORDER = {
+  riseSeconds: 2.4, // seconds of continuous movement from noise to Flow
+  sinkSeconds: 7, // how slowly unfinished order drains when movement stops
+  movingWindow: 160, // ms after a move that still counts as moving
+  touchDelay: 1800, // ms before a touch screen resolves on its own
+};
+
+function easeInOutCubic(x: number) {
+  const t = Math.min(1, Math.max(0, x));
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function useFlowOrder() {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     const section = ref.current;
     if (!section) return undefined;
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return undefined;
+    const frame = () => section.querySelector<HTMLIFrameElement>(".flow-hero__bg iframe");
+    const copyBend = section.querySelector<SVGFEDisplacementMapElement>("#flow-copy-bend");
+    const copyField = section.querySelector<SVGFETurbulenceElement>("#flow-copy-field");
+    const copySoften = section.querySelector<SVGFEGaussianBlurElement>("#flow-copy-soften");
+    const copy = section.querySelector<HTMLElement>(".flow-hero__lede");
 
-    let timer = window.setTimeout(() => recede(), FIRST_SHOW_MS);
-    function recede() {
-      if (section!.querySelector(".flow-hero__ctas:focus-within")) return;
-      section!.dataset.idle = "true";
-    }
-    const wake = () => {
-      delete section.dataset.idle;
-      clearTimeout(timer);
-      timer = window.setTimeout(recede, IDLE_MS);
+    let progress = 0;
+    let lastMove = -Infinity;
+    let locked = false;
+    let raf = 0;
+    let last = performance.now();
+    let clock = 0;
+    let sent = -1;
+
+    const apply = (order: number) => {
+      section.style.setProperty("--order", order.toFixed(3));
+      section.dataset.state = order >= 0.999 ? "flow" : order > 0.02 ? "settling" : "noise";
+      // the copy reads as if seen through the moving bubbles until order settles it
+      const noise = 1 - order;
+      if (copy && copyBend && copyField && copySoften) {
+        if (noise > 0.002) {
+          copy.style.filter = "url(#flow-copy-refract)";
+          copyBend.setAttribute("scale", (noise * 16).toFixed(2));
+          copySoften.setAttribute("stdDeviation", (noise * 1.4).toFixed(2));
+          copyField.setAttribute(
+            "baseFrequency",
+            `${(0.012 + 0.004 * Math.sin(clock * 0.9)).toFixed(4)} ${(0.05 + 0.015 * Math.sin(clock * 1.3 + 1)).toFixed(4)}`,
+          );
+        } else {
+          copy.style.filter = "";
+        }
+      }
+      if (Math.abs(order - sent) > 0.002 || (order >= 1 && sent < 1)) {
+        sent = order;
+        frame()?.contentWindow?.postMessage({ flowOrder: order }, "*");
+      }
     };
 
-    // the background is its own frame, and moves over it never reach this
-    // page, so the frame posts a short message whenever the pointer moves in it
+    const tick = (now: number) => {
+      const dt = Math.max(0, Math.min(0.25, (now - last) / 1000));
+      last = now;
+      clock += dt;
+      if (!locked) {
+        if (now - lastMove < ORDER.movingWindow) progress += dt / ORDER.riseSeconds;
+        else progress -= dt / ORDER.sinkSeconds;
+        progress = Math.min(1, Math.max(0, progress));
+        if (progress >= 1) locked = true;
+      }
+      apply(easeInOutCubic(progress));
+      // once settled there is nothing left to drive; the frame keeps its own motion
+      if (locked) {
+        apply(1);
+        raf = 0;
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    const settleNow = () => {
+      progress = 1;
+      locked = true;
+      apply(1);
+    };
+    const moved = () => {
+      lastMove = performance.now();
+    };
+    // the background is its own frame; moves over it reach this page only as messages
     const onMessage = (event: MessageEvent) => {
-      if (event.data && event.data.flowPointer === true) wake();
+      if (event.data && event.data.flowPointer === true) moved();
+      // a frame that has just loaded asks where things stand
+      if (event.data && event.data.flowHello === true) {
+        sent = -1;
+        apply(locked ? 1 : easeInOutCubic(progress));
+      }
+    };
+    const onFocus = (event: FocusEvent) => {
+      if ((event.target as HTMLElement).closest(".flow-hero__ctas")) settleNow();
     };
 
-    window.addEventListener("pointermove", wake, { passive: true });
-    window.addEventListener("keydown", wake);
-    window.addEventListener("wheel", wake, { passive: true });
+    let touchTimer = 0;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      settleNow();
+    } else {
+      if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+        // no cursor to move: let the scene resolve on its own after a beat
+        touchTimer = window.setTimeout(() => {
+          const start = performance.now();
+          const glide = () => {
+            lastMove = performance.now();
+            if (!locked && performance.now() - start < ORDER.riseSeconds * 1000 + 400) requestAnimationFrame(glide);
+          };
+          glide();
+        }, ORDER.touchDelay);
+      }
+      apply(0);
+      raf = requestAnimationFrame(tick);
+    }
+
+    window.addEventListener("pointermove", moved, { passive: true });
     window.addEventListener("message", onMessage);
-    section.addEventListener("focusin", wake);
+    section.addEventListener("focusin", onFocus);
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener("pointermove", wake);
-      window.removeEventListener("keydown", wake);
-      window.removeEventListener("wheel", wake);
+      cancelAnimationFrame(raf);
+      clearTimeout(touchTimer);
+      window.removeEventListener("pointermove", moved);
       window.removeEventListener("message", onMessage);
-      section.removeEventListener("focusin", wake);
-      delete section.dataset.idle;
+      section.removeEventListener("focusin", onFocus);
+      delete section.dataset.state;
+      if (copy) copy.style.filter = "";
     };
   }, []);
   return ref;
 }
 
 export function FlowHero() {
-  const sectionRef = useRecedeWhenIdle();
+  const sectionRef = useFlowOrder();
   return (
     <section ref={sectionRef} className="flow-hero" aria-labelledby="flow-hero-title">
       {/* decorative background: the pointer still reaches it, so the camera keeps its
@@ -266,6 +366,15 @@ export function FlowHero() {
         <LiquidDimensionalField />
       </div>
       <div className="flow-hero__scrim" aria-hidden="true" />
+
+      {/* the refraction the body copy is seen through until the scene settles */}
+      <svg className="flow-hero__defs" aria-hidden="true" focusable="false">
+        <filter id="flow-copy-refract" x="-6%" y="-40%" width="112%" height="180%" colorInterpolationFilters="sRGB">
+          <feTurbulence id="flow-copy-field" type="fractalNoise" baseFrequency="0.012 0.05" numOctaves={2} seed={11} result="field" />
+          <feDisplacementMap id="flow-copy-bend" in="SourceGraphic" in2="field" scale={16} xChannelSelector="R" yChannelSelector="G" result="bent" />
+          <feGaussianBlur id="flow-copy-soften" in="bent" stdDeviation={1.4} />
+        </filter>
+      </svg>
 
       <div className="flow-hero__content">
         <h1 id="flow-hero-title" className="flow-hero__title">

@@ -111,7 +111,7 @@ This took the most rounds, and most of the direction came from me.
 8. **Connected lettering.** Watching closely, I saw the script's letters break apart during the pour: each letter was a separate piece, and swelling them one by one pulled the joins open. **Flow** is now drawn as one piece of SVG lettering that can't come apart. Its box is fitted to the actual ink (the font reserves a lot of empty space above and below its letters, which had pushed the layout apart).
 9. **Colour that follows the writing.** The liquid rose from the bottom of each letter; I asked for it to flow the way the word is written. A stream now enters at the tip of the F, runs into the l, through the o and out along the w, with a wavy edge slanted like the script, and drains away in the same direction. I also restored the tagline as the body copy under the name.
 10. **Letters that move.** I asked for the letters themselves to flow while the colour passes. A distortion filter frayed the brush edges, so instead the word rides a baseline that rolls as a slow wave: the joined letters sway together and stay crisp.
-11. **A hero that clears itself.** At my request, the tagline, buttons and note come forward while someone moves the cursor and recede after a short pause, leaving only the name over the moving background. They show first for a few seconds on arrival, never hide while a button has keyboard focus, and stay visible on touch screens. The background frame reports pointer movement to the page, since moves over a frame don't reach it otherwise.
+11. **A hero that clears itself.** At my request, the tagline, buttons and note come forward while someone moves the cursor and recede after a short pause, leaving only the name over the moving background. They show first for a few seconds on arrival, never hide while a button has keyboard focus, and stay visible on touch screens. The background frame reports pointer movement to the page, since moves over a frame don't reach it otherwise. (Replaced in step 9.)
 
 Lesson for my workflow: when I ask for a change to one thing (here, the typeface), I need to say explicitly what to keep (the animation). The AI otherwise tends to redo everything.
 
@@ -140,6 +140,22 @@ I noticed the background bubbles were rigid: perfect spheres whose outlines stay
 |---|---|
 | ![Liquid bubbles](process/11-liquid-bubbles.png) | ![Bubble swelling smoothly toward the cursor](process/12-liquid-bubbles-cursor.png) |
 
+### 9. From noise to Flow: the page acts out its tagline
+
+I wrote out the full sequence I wanted: the page opens loud, and the visitor's own movement calms it until the message is clear and Get Started is the obvious next step. It turns the tagline, "without the noise", into something the visitor does rather than reads.
+
+- **On open (noise):** "Flow" and Get Started are clear from the first frame. The colour field churns and each bubble drifts on its own path. The body copy is in place but unresolved: an SVG refraction filter bends and softens it, as if seen through the bubbles.
+- **As the cursor moves:** a single "order" value rises from 0 to 1 over about 2.4 seconds of movement and eases back if the visitor stops early. The page and the WebGL scene share it through `postMessage`.
+- **What order changes:** the bubbles leave their separate paths and join one shared, slow current. The background turbulence and the bend through the bubbles both reduce, and the scene's clock slows by about half, so it calms without ever stopping. The copy's distortion and blur fade to nothing, and the filter is then removed entirely so the final text is pixel-sharp.
+- **Final state (flow):** once the sentence is fully readable, order locks at 1. Get Started grows slightly and gains a soft glow, and the secondary button steps back, so the primary CTA is the strongest element on the page.
+- **Access:** keyboard focus on a button, reduced-motion settings and touch screens (after a short pause) all go straight to the readable state, so no one has to perform a mouse gesture to read the copy.
+- I removed the earlier "recede when idle" behaviour, since the new sequence replaces it: once the visitor has settled the page, it stays settled.
+- The first browser test caught a bug: the scene's new state variables had not been injected into the iframe, so it threw an error every frame while the page side looked fine. After the fix the console was clean.
+
+| On open: active, copy unresolved | After interaction: composed, copy clear, Get Started in focus |
+|---|---|
+| ![Noise state](process/14-noise-on-open.png) | ![Flow state](process/15-flow-after-interaction.png) |
+
 ## Where I directed or corrected the AI
 
 | AI output | My direction |
@@ -162,6 +178,7 @@ I noticed the background bubbles were rigid: perfect spheres whose outlines stay
 | Opaque, lumpy bubbles | Asked for real refraction and round arcs that recover after interaction |
 | Static lettering during the colour flow | Asked for the letters themselves to flow |
 | Buttons and text always on screen | Asked for them to appear with interaction and recede when idle |
+| A hero that looked the same before and after interaction | Wrote the full noise → Flow sequence: distorted copy that the visitor's movement resolves, ending on Get Started |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection

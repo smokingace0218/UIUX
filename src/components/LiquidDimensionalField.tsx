@@ -19,6 +19,7 @@ import dimensionalSource from "../shaders/neuform-isolated/sources/vanguard-dime
 const GLASS_VERTEX = /varying vec3 vNormal;\s*void main\(\) \{\s*vNormal = normalize\(normalMatrix \* normal\);\s*gl_Position = projectionMatrix \* modelViewMatrix \* vec4\(position, 1\.0\);\s*\}/;
 
 const LIQUID_VERTEX = `uniform float u_time;
+                    uniform float u_order;
                     uniform vec3 u_pointer;
                     uniform float u_pull;
                     varying vec3 vNormal;
@@ -35,7 +36,7 @@ const LIQUID_VERTEX = `uniform float u_time;
                         // a liquid surface: each point rides gently out and in along its
                         // normal, enough to keep the outline alive while it stays a round arc
                         float w = wobble(position, t * 0.8);
-                        vec3 p = position + normal * 0.045 * w;
+                        vec3 p = position + normal * 0.045 * (1.0 - 0.45 * u_order) * w;
                         vec4 world = modelMatrix * vec4(p, 1.0);
 
                         // drawn toward the pointer as a broad, soft swell: the surface moves
@@ -58,7 +59,8 @@ const LIQUID_VERTEX = `uniform float u_time;
 const UNIFORMS_ANCHOR = "u_color2: { value: new THREE.Color(0.4, 0.0, 0.9) }  // Deep Purple";
 const UNIFORMS_ADDED = `${UNIFORMS_ANCHOR}
                 ,u_pointer: { value: new THREE.Vector3(0, 0, 0) },
-                u_pull: { value: 0 }`;
+                u_pull: { value: 0 },
+                u_order: { value: 0 }`;
 
 // the pointer, carried into world units on the z = 0 plane the spheres sit around
 const POINTER_ANCHOR = "const resize = () => {";
@@ -81,6 +83,16 @@ const POINTER_TRACKING = `// liquid: where the pointer is in the scene, and whet
             });
             document.documentElement.addEventListener('mouseleave', () => { liquidLastMove = -1e9; });
 
+            // order: 0 is the noisy opening, 1 is the composed flow. The host page owns it.
+            let liquidOrder = 0;
+            let liquidOrderGoal = 0;
+            let liquidClock = 0;
+            window.addEventListener('message', (event) => {
+                const order = event.data && event.data.flowOrder;
+                if (typeof order === 'number') liquidOrderGoal = Math.min(1, Math.max(0, order));
+            });
+            if (window.parent !== window) window.parent.postMessage({ flowHello: true }, '*');
+
             ${POINTER_ANCHOR}`;
 
 // each frame: ease the pull in while the pointer moves, let the liquid relax when it rests
@@ -92,7 +104,14 @@ const FRAME_ADDED = `${FRAME_ANCHOR}
                 liquidLastFrame = liquidNow;
                 const liquidGoal = liquidNow - liquidLastMove < 1200 ? 1 : 0;
                 uniforms.u_pull.value += (liquidGoal - uniforms.u_pull.value) * (1 - Math.exp(-liquidDt / (liquidGoal ? 0.35 : 0.6)));
-                uniforms.u_pointer.value.lerp(liquidTarget, 1 - Math.exp(-liquidDt / 0.12));`;
+                uniforms.u_pointer.value.lerp(liquidTarget, 1 - Math.exp(-liquidDt / 0.12));
+
+                // order eases in over most of a second, so the scene composes itself rather than snapping
+                liquidOrder += (liquidOrderGoal - liquidOrder) * (1 - Math.exp(-liquidDt / 0.6));
+                uniforms.u_order.value = liquidOrder;
+                // the field runs on its own clock, which slows as order rises: calmer, never still
+                liquidClock += liquidDt * (1 - 0.45 * liquidOrder);
+                uniforms.u_time.value = liquidClock;`;
 
 // the beams: authored, they fade fully out between passes, so the background
 // empties and refills. A floor keeps a dim current of light always present,
@@ -116,7 +135,7 @@ const GLASS_REFRACTION = `varying vec3 vNormal;
                         uv.x *= u_resolution.x / u_resolution.y;
                         vec3 baseColor = vec3(0.02, 0.02, 0.03);
                         vec2 st = uv * 0.5;
-                        st += vec2(snoise(st + u_time * 0.04), snoise(st - u_time * 0.04)) * 0.4;
+                        st += vec2(snoise(st + u_time * 0.04), snoise(st - u_time * 0.04)) * (0.4 - 0.18 * u_order);
                         float beam = 0.3 + 0.7 * smoothstep(-0.45, 0.9, snoise(vec2(st.x + st.y * 2.0 - u_time * 0.1, u_time * 0.03)));
                         vec3 glow = mix(u_color1, u_color2, snoise(uv * 2.0 + u_time * 0.15) * 0.5 + 0.5);
                         float vignette = smoothstep(1.5, 0.1, distance(screen, vec2(0.5)));
@@ -130,7 +149,7 @@ const GLASS_REFRACTION = `varying vec3 vNormal;
                         float fresnel = pow(1.0 - facing, 2.2);
 
                         // refraction: the view through the bubble bends, more toward the rim
-                        vec2 bend = n.xy * (0.05 + 0.12 * fresnel);
+                        vec2 bend = n.xy * (0.05 + 0.12 * fresnel) * (1.0 - 0.35 * u_order);
                         vec3 behind = fieldAt(screen - bend);
 
                         // thin film: colours that shift with the viewing angle and drift slowly
@@ -147,15 +166,25 @@ const GLASS_REFRACTION = `varying vec3 vNormal;
                         gl_FragColor = vec4(color, 1.0);
                     }`;
 
-// the bubbles drift: a bubble near the cursor eases away from it and grows a
-// little, then floats back and settles when the cursor moves off. Springs are
-// timed in seconds, so the drift is the same at any frame rate.
+// the bubbles: with no order each bobs on its own authored rhythm; as order
+// rises they blend into one shared current, rising, falling and swaying the
+// same way at the same tempo. A bubble near the cursor also eases away from it
+// and grows a little, then floats back. Springs are timed in seconds, so the
+// motion is the same at any frame rate.
 const RENDER_ANCHOR = "renderer.render(scene, camera);";
 const RENDER_DRIFT = `spheres.forEach(s => {
                     if (!s.liquid) s.liquid = { baseX: s.mesh.position.x, baseScale: s.mesh.scale.x, ox: 0, oy: 0, grow: 0 };
                     const L = s.liquid;
                     const radius = L.baseScale;
-                    const dx = (L.baseX + L.ox) - uniforms.u_pointer.value.x;
+
+                    // the shared current every bubble joins as order rises
+                    const sharedY = s.baseY + Math.sin(liquidClock * 0.55) * 0.5;
+                    s.mesh.position.y += (sharedY - s.mesh.position.y) * liquidOrder;
+                    const sway = Math.sin(liquidClock * 0.21) * liquidOrder;
+                    const currentX = sway * 0.9;
+                    const currentY = sway * 0.35;
+
+                    const dx = (L.baseX + L.ox + currentX) - uniforms.u_pointer.value.x;
                     const dy = s.mesh.position.y - uniforms.u_pointer.value.y;
                     const distance = Math.max(0.001, Math.hypot(dx, dy));
                     // 1 with the cursor on or inside the bubble's edge, easing to 0 a little way out
@@ -167,13 +196,23 @@ const RENDER_DRIFT = `spheres.forEach(s => {
                     L.ox += ((dx / distance) * push - L.ox) * settle;
                     L.oy += ((dy / distance) * push - L.oy) * settle;
                     L.grow += (near - L.grow) * (1 - Math.exp(-liquidDt / 0.5));
-                    s.mesh.position.x = L.baseX + L.ox;
-                    s.mesh.position.y += L.oy;
+                    s.mesh.position.x = L.baseX + L.ox + currentX;
+                    s.mesh.position.y += L.oy + currentY;
                     const size = radius * (1 + 0.07 * L.grow);
                     s.mesh.scale.set(size, size, size);
                 });
 
                 ${RENDER_ANCHOR}`;
+
+// both fragment shaders include the shared noise source, so declaring the
+// order uniform there gives it to each of them
+const NOISE_ANCHOR = "vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }";
+const NOISE_WITH_ORDER = `uniform float u_order;
+                ${NOISE_ANCHOR}`;
+
+// the background field: its turbulence quietens as order rises
+const BG_DISTORT = "st += vec2(snoise(st + u_time * 0.04), snoise(st - u_time * 0.04)) * 0.4;";
+const BG_DISTORT_ORDERED = "st += vec2(snoise(st + u_time * 0.04), snoise(st - u_time * 0.04)) * (0.4 - 0.18 * u_order);";
 
 // only the canvas shows; the authored page around it is hidden but left in place
 const ISOLATE_STYLE = `<style>
@@ -189,6 +228,8 @@ function liquefy(source: string) {
     [POINTER_ANCHOR, POINTER_TRACKING],
     [FRAME_ANCHOR, FRAME_ADDED],
     [BG_BEAM, BG_BEAM_STEADY],
+    [NOISE_ANCHOR, NOISE_WITH_ORDER],
+    [BG_DISTORT, BG_DISTORT_ORDERED],
     [GLASS_FRAGMENT, GLASS_REFRACTION],
     [RENDER_ANCHOR, RENDER_DRIFT],
   ];
