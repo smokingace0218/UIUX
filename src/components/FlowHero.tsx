@@ -113,9 +113,6 @@ export function FlowHero() {
           <span className="flow-hero__line">Let Your</span>
           <span className="flow-hero__line">Work <FlowWord />.</span>
         </h1>
-        <p className="flow-hero__lede">
-          Everything you need to get your work done, without the noise.
-        </p>
         <div className="flow-hero__ctas">
           <a className="flow-button" href="#get-started">Get Started</a>
           <a className="flow-button flow-button--glass" href="#features">See how it works</a>

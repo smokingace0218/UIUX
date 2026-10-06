@@ -99,7 +99,8 @@ This took the most rounds, and most of the direction came from me.
 2. **A detour.** I asked for a better treatment and described a drop making each letter. Claude read that as a request for a new animation and built a drop that writes the word in brush script. The script wasn't readable at headline size, and I preferred the pour.
 3. **Bouncy vs flowing.** On the logo, I called out that the drop hopping between letters felt bouncy. It now glides F → w along one even path, each letter brightening as it passes.
 4. **A better typeface for the pour.** The pour animation came back, first in *Fraunces* italic, a readable calligraphic serif.
-5. **Final: the logo's own hand.** I asked for the headline to use the logo's typeface and letter case. It now reads **Let Your Work Flow.** in the same brush script as the logo (*Mr Dafoe*), in title case, so the wordmark and the headline read as one hand. "Flow" carries the gradient and the pour: liquid fills each letter, which swells slightly as it fills, then pours on to the next. The tagline stays in the plain sans-serif so it stays readable.
+5. **The logo's own hand.** I asked for the headline to use the logo's typeface and letter case, giving **Let Your Work Flow.** in title case.
+6. **Final: balance.** Set entirely in script, the line felt heavy, so through a comment on the preview I asked for "Let Your Work" in something that balances "Flow". It is now a light, tightly spaced sans (*Geist*, the same face as the buttons), and only **Flow** stays in the logo's brush script, carrying the gradient and the pour. It's the same pairing Butter uses: plain type everywhere, script only for the name. I also asked to remove the body copy under the headline, so the hero is just the headline and the call to action.
 
 Lesson for my workflow: when I ask for a change to one thing (here, the typeface), I need to say explicitly what to keep (the animation). The AI otherwise tends to redo everything.
 
@@ -118,12 +119,13 @@ I noticed the background bubbles were rigid: perfect spheres whose outlines stay
 
 - The ThreeUI source file stays untouched. A new component, `LiquidDimensionalField`, rewrites a copy of it when the page loads, the same way ThreeUI's own host adapts its documents.
 - The bubbles' vertex shader now ripples their surface with slow crossing waves, so they are soft blobs.
-- Near the cursor, the surface swells and stretches toward it like liquid being drawn, then relaxes when the pointer rests.
+- Near the cursor, the surface swells softly outward like liquid being drawn, then relaxes when the pointer rests.
+- My first version pulled the surface *toward* the cursor, and I noticed it made the bubbles sharp: a crease formed where the cursor met an edge. Any movement aimed at the cursor's direction flips right at the cursor, so the swell now depends only on distance from it. That keeps the bubbles round and smooth while they react.
 - If the source ever changes and the hooks no longer match, it falls back to the original effect instead of breaking.
 
 | At rest | Cursor near the right bubble |
 |---|---|
-| ![Liquid bubbles](process/11-liquid-bubbles.png) | ![Bubble drawn to the cursor](process/12-liquid-bubbles-cursor.png) |
+| ![Liquid bubbles](process/11-liquid-bubbles.png) | ![Bubble swelling smoothly toward the cursor](process/12-liquid-bubbles-cursor.png) |
 
 ## Where I directed or corrected the AI
 
@@ -138,6 +140,8 @@ I noticed the background bubbles were rigid: perfect spheres whose outlines stay
 | Set the headline in a different typeface from the logo | Asked for the logo's typeface and letter case in the headline, so the brand reads as one hand |
 | Hops and squash in the logo animation | Called out the bouncy feel; the drop now glides |
 | Rigid, perfectly round bubbles | Asked for liquid bubbles that flow toward the cursor |
+| Bubbles that turned sharp when reacting to the cursor | Asked for flowing without losing smoothness |
+| A headline set entirely in script, plus body copy | Asked for a balancing typeface for "Let Your Work", and removed the body copy |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection

@@ -8,8 +8,8 @@ import dimensionalSource from "../shaders/neuform-isolated/sources/vanguard-dime
    rewrites a copy of it at load time, the same way ThreeUI's own host adapts
    its documents. The authored spheres are rigid: they only bob, so their
    outlines stay perfect arcs. Here their surface flows instead. Slow waves
-   ripple it all the time, and near the cursor it swells and stretches toward
-   the pointer like liquid being drawn, then relaxes when the pointer rests.
+   ripple it all the time, and near the cursor it swells softly outward like
+   liquid being drawn, then relaxes when the pointer rests.
    Everything else (the beams, colours, camera parallax and timing) is the
    authored effect. */
 
@@ -35,13 +35,15 @@ const LIQUID_VERTEX = `uniform float u_time;
                         vec3 p = position + normal * 0.11 * w;
                         vec4 world = modelMatrix * vec4(p, 1.0);
 
-                        // drawn toward the pointer: the near side swells out and leans to the cursor
+                        // drawn toward the pointer as a broad, soft swell: the surface moves
+                        // outward along its own normal by a bell curve of distance from the
+                        // cursor. Nothing here uses the direction to the cursor, which is
+                        // undefined at the cursor itself and flips across it, creasing the
+                        // surface into a point; distance alone stays smooth everywhere.
                         vec2 toPointer = u_pointer.xy - world.xy;
-                        float reach = u_pull * exp(-dot(toPointer, toPointer) * 0.12);
+                        float swell = u_pull * exp(-dot(toPointer, toPointer) * 0.06);
                         vec3 worldNormal = normalize(mat3(modelMatrix) * normal);
-                        float facing = max(0.0, dot(normalize(vec3(toPointer, 0.0001)), normalize(vec3(worldNormal.xy, 0.0001))));
-                        world.xy += toPointer * reach * 0.32 * (0.35 + 0.65 * facing);
-                        world.xyz += worldNormal * reach * 0.55 * facing;
+                        world.xyz += worldNormal * swell * 0.55;
 
                         // tilt the normal with the waves so the fresnel rim ripples too
                         vec3 n = normal + 0.12 * vec3(cos(position.x * 2.1 + t * 0.9), cos(position.y * 1.7 + t * 0.7), cos(position.z * 2.3 + t * 0.8));
