@@ -91,18 +91,33 @@ Testing caught a real bug along the way. The browser's first frame can carry a t
 
 ![Logo on hover, frame by frame](process/09-logo-drop-on-hover.png)
 
-### 7. The headline word: liquid poured letter to letter
+### 7. The headline and logo: from bouncy to flowing
 
-The hero's "flow" word only swelled under the cursor. I asked for the expansion and highlight to pass between the letters in a way that reflects the name. The result treats each letter as a vessel:
+The headline "flow" first only swelled under the cursor. My first ask for a passing highlight produced liquid filling each letter, which I rejected: it looked abstract and didn't show *flow*. I described what I wanted instead: the F starts, a drop runs off it and makes the L, and so on.
 
-- A bright liquid with a sloshing, wavy surface rises inside the **f**, and the letter widens and gets bolder as it fills.
-- As the f drains, the **l** fills, then the **o**, then the **w**. The highlight is poured along the word like water from glass to glass.
-- It plays once after the headline arrives, then every few seconds, and continuously while the word is hovered. It's off for reduced motion.
-- Underneath the liquid, each letter shows its own slice of one gradient sized to the whole word, so the word still reads as a single cyan-to-violet sweep.
+The next version did that with hops: a drop arcing from letter to letter, squashing on landing, letters springing into place. It worked, but I pointed out that it, and the logo, felt bouncy rather than flowing. That led to one motion language for the whole hero, **a current, not a bounce**:
 
-The first test render caught a positioning bug. The letters after "l" disappeared when empty, because each letter's position was measured from the whole hero section instead of the word, so their slices of the gradient fell off its end.
+- **Headline:** one stream writes the word. A drop glides in after "work", each letter of *flow* is revealed as it passes over it, and at the end the drop slows, shrinks and settles as the full stop. Nothing overshoots.
+- **Logo:** the drop glides F → w along one low, even path, each letter brightening as it passes. There's no hopping and no squash.
+- **Typeface:** "Let your work" moved from the narrow *Anybody* to *Instrument Serif* italic. Its calligraphic curves run on into the brush-script *flow*, which matches the logo.
 
-![Headline pour, frame by frame](process/10-headline-pour.png)
+Testing caught a crash along the way: the browser's first animation frame can be stamped slightly before the start time, which made time run backwards. Time steps are now never allowed to go negative.
+
+![Headline written by a drop](process/10-headline-written-by-a-drop.png)
+![Logo glide on hover](process/09-logo-drop-on-hover.png)
+
+### 8. Liquid bubbles
+
+I noticed the background bubbles were rigid: perfect spheres whose outlines stay clean arcs. I asked for them to flow and respond to the cursor.
+
+- The ThreeUI source file stays untouched. A new component, `LiquidDimensionalField`, rewrites a copy of it when the page loads, the same way ThreeUI's own host adapts its documents.
+- The bubbles' vertex shader now ripples their surface with slow crossing waves, so they are soft blobs.
+- Near the cursor, the surface swells and stretches toward it like liquid being drawn, then relaxes when the pointer rests.
+- If the source ever changes and the hooks no longer match, it falls back to the original effect instead of breaking.
+
+| At rest | Cursor near the right bubble |
+|---|---|
+| ![Liquid bubbles](process/11-liquid-bubbles.png) | ![Bubble drawn to the cursor](process/12-liquid-bubbles-cursor.png) |
 
 ## Where I directed or corrected the AI
 
@@ -112,7 +127,9 @@ The first test render caught a positioning bug. The letters after "l" disappeare
 | Expanded "responsive webpage" into a six-section landing page | Cut it to the hero only, matching the brief |
 | Its test said the hover worked | Noticed it didn't in the live preview; the root cause was a CSS inheritance bug |
 | Invented an automation product and its copy | Brought the copy back to the brief's productivity app, tagline and CTA |
-| A headline word that only reacted to the cursor | Asked for the highlight to pass between the letters in a way that reflects the name |
+| A headline word that only reacted to the cursor, then liquid filling each letter | Rejected the fill as abstract; described the F making the L with a drop |
+| Hops, squash and springy overshoot in both logo and headline | Called out the bouncy feel; everything became one gliding current |
+| Rigid, perfectly round bubbles | Asked for liquid bubbles that flow toward the cursor |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection

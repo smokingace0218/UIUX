@@ -182,52 +182,83 @@ summary:focus-visible {
   padding: 48px clamp(16px, 6vw, 96px);
 }
 
+/* a calligraphic italic serif: its curves run on into the brush-script word */
 .flow-hero__title {
   margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(3.4rem, 10.5vw, 13rem);
-  font-weight: 300;
-  font-variation-settings: "wdth" 72, "wght" 300;
-  line-height: 0.92;
-  letter-spacing: -0.035em;
+  font-family: var(--font-headline);
+  font-size: clamp(3.4rem, 9.5vw, 11.5rem);
+  font-style: italic;
+  font-weight: 400;
+  line-height: 0.96;
+  letter-spacing: -0.02em;
 }
 
 .flow-hero__line {
   display: block;
 }
 
-/* the signature word: each letter is a vessel. Two layers are clipped to the
-   letterform: on top, a bright liquid whose wavy surface sits at the letter's
-   fill level and drifts sideways; underneath, the cyan-to-violet gradient,
-   sized to the whole word so the letters read as one continuous sweep. */
+/* the signature word, written by a drop. Each letter carries its own slice of
+   one gradient sized to the whole word, so it reads as a single sweep; the
+   padding gives the script's flourishes room inside the painted box, and the
+   negative margin takes that room back out of the layout. */
 .flow-word {
-  /* positioned, so each letter's offsetLeft is measured from the word itself */
+  /* positioned, so the drop and each letter's offsetLeft are measured from here */
   position: relative;
   display: inline-block;
-  padding-right: 0.04em;
+  margin-left: 0.06em;
+  font-style: normal;
+  white-space: nowrap;
   cursor: default;
 }
 
-.flow-word [data-letter] {
-  --fill: 0;
-  --slosh: 0;
+.flow-word__letter {
   --x: 0px;
   --w: 3em;
   display: inline-block;
+  margin: -0.3em -0.14em;
+  padding: 0.3em 0.14em;
   color: transparent;
-  background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 200' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='l' x1='0' x2='0' y1='0.5' y2='1'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='0.06' stop-color='%23d9fff8'/%3E%3Cstop offset='1' stop-color='%2363f2dc'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 100 Q15 91 30 100 T60 100 T90 100 T120 100 V200 H0 Z' fill='url(%23l)'/%3E%3C/svg%3E"),
-    linear-gradient(100deg, var(--tide) 8%, #6fb7ff 48%, var(--violet) 92%);
-  background-repeat: repeat-x, no-repeat;
-  background-size: 0.9em 200%, var(--w) 100%;
-  background-position:
-    calc(var(--slosh) * -0.01em) calc(var(--fill) * 100%),
-    calc(var(--x) * -1) 0;
+  background: linear-gradient(100deg, var(--tide) 6%, #6fb7ff 50%, var(--violet) 94%) no-repeat;
+  background-size: var(--w) 100%;
+  background-position: calc(var(--x) * -1) 0;
   -webkit-background-clip: text;
   background-clip: text;
-  /* a full letter swells wider and bolder, like a vessel holding the liquid */
-  font-variation-settings: "wdth" calc(100 + var(--fill) * 42), "wght" calc(640 + var(--fill) * 240);
-  transform: translateY(calc(var(--fill) * -0.02em));
+  font-family: var(--font-display);
+  font-size: 1.32em;
+  line-height: 1;
+  vertical-align: -0.06em;
+  letter-spacing: 0;
+  transform-origin: 0% 60%;
+}
+
+.flow-word__stop {
+  display: inline-block;
+  margin-left: 0.08em;
+  color: var(--ink);
+}
+
+/* until the first pass writes it, the word waits unseen (only when JS runs it) */
+.flow-word[data-pending] .flow-word__letter {
+  clip-path: inset(0 100% 0 0);
+}
+
+.flow-word[data-pending] .flow-word__stop {
+  opacity: 0;
+}
+
+/* the drop: a glossy bead of the same liquid, stretched along its path by JS */
+.flow-drop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0.16em;
+  height: 0.16em;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #ffffff 0 12%, #8ff8e8 30%, var(--tide) 62%, #0fa995 100%);
+  box-shadow: 0 0 0.12em rgba(25, 217, 191, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
 }
 
 .visually-hidden {
@@ -435,7 +466,7 @@ summary:focus-visible {
   }
 }
 
-/* ── logo: a brush-script wordmark; on hover a drop hops through it (FlowLogo) ── */
+/* ── logo: a brush-script wordmark; on hover a drop glides through it (FlowLogo) ── */
 
 .flow-logo {
   position: relative;
@@ -449,7 +480,7 @@ summary:focus-visible {
   /* the script overhangs its box on both sides, so give the flourishes room */
   padding: 0.06em 0.18em 0.1em 0.04em;
   color: var(--ink);
-  font-family: "Mr Dafoe", "Brush Script MT", cursive;
+  font-family: var(--font-display);
   font-size: 1.95em;
   font-weight: 400;
   line-height: 1;
@@ -459,16 +490,12 @@ summary:focus-visible {
   paint-order: stroke fill;
 }
 
-/* each letter lights up as the drop lands on it, and gives a little under it */
+/* each letter brightens and lifts a hair as the current passes through it */
 .flow-logo__word [data-letter] {
   --lit: 0;
-  --touch: 0;
   display: inline-block;
   color: color-mix(in srgb, var(--tide) calc(var(--lit) * 100%), var(--ink));
-  transform-origin: 50% 85%;
-  transform:
-    translateY(calc(var(--lit) * -0.04em))
-    scale(calc(1 + var(--touch) * 0.06), calc(1 - var(--touch) * 0.08));
+  transform: translateY(calc(var(--lit) * -0.03em));
 }
 
 /* the drop layer shares the logo's coordinates; the drop arcs above the

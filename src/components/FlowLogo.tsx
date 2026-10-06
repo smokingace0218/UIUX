@@ -4,16 +4,15 @@ const WORD = "Flow";
 /* where a drop lands on each glyph, as a fraction of the letter box height:
    the ascenders of F and l sit high, the bowls of o and w sit lower */
 const LANDING = [0.2, 0.12, 0.46, 0.46];
-// the drop visits the letters in this order, then loops: F l o w o l
-const ROUTE = [0, 1, 2, 3, 2, 1];
-const HOP_SECONDS = 0.42;
+const PASS_SECONDS = 1.5; // one glide from before the F to past the w
 
-/* The brush wordmark acts out its name on hover. A drop springs out of the F
-   and hops from letter to letter; each letter it lands on squashes slightly
-   and lights up, then hands the light on as the drop moves to the next. A
-   trailing droplet and a goo filter fuse into one stretching drop, so the
-   letters read as connected by liquid. Timing is in seconds, so the frame
-   rate never stretches it. */
+/* The brush wordmark acts out its name on hover. A drop glides through it
+   along one low, even path, F to w, like a current; each letter brightens as
+   the drop passes and fades as it moves on, then the drop slips away past the
+   w and the next one glides in from the left. A trailing droplet and a goo
+   filter fuse into one drawn-out drop. Nothing hops or squashes: it should
+   read as flowing, not bouncing. Timing is in seconds, so the frame rate
+   never stretches it. */
 export function FlowLogo() {
   const rootRef = useRef<HTMLSpanElement>(null);
   const dropRef = useRef<SVGCircleElement>(null);
@@ -33,7 +32,7 @@ export function FlowLogo() {
     const letters = Array.from(root.querySelectorAll<HTMLSpanElement>("[data-letter]"));
     let spots: { x: number; y: number }[] = [];
     let presence = 0; // 0 = no drop, 1 = drop fully there
-    let hop = 0; // position along ROUTE, in hops
+    let pass = 0; // glides through the word so far; the fraction is progress through this one
     let tailX = 0;
     let tailY = 0;
     let frame = 0;
@@ -54,39 +53,44 @@ export function FlowLogo() {
       const dt = Math.max(0, Math.min(0.25, (now - last) / 1000));
       last = now;
 
-      const hopIndex = Math.floor(hop);
-      const t = hop - hopIndex;
-      // keep hopping while hovered; once the pointer leaves, finish this hop and fade
-      if (active.current || t > 0.001) {
-        hop += dt / HOP_SECONDS;
-        if (!active.current && Math.floor(hop) > hopIndex) hop = Math.floor(hop);
+      // keep gliding while hovered; once the pointer leaves, finish this pass and fade
+      if (active.current || pass % 1 > 0.001) {
+        const before = Math.floor(pass);
+        pass += dt / PASS_SECONDS;
+        if (!active.current && Math.floor(pass) > before) pass = Math.floor(pass);
       }
-      presence += ((active.current ? 1 : 0) - presence) * (1 - Math.exp(-dt / (active.current ? 0.12 : 0.22)));
+      presence += ((active.current ? 1 : 0) - presence) * (1 - Math.exp(-dt / (active.current ? 0.15 : 0.3)));
 
-      const from = spots[ROUTE[hopIndex % ROUTE.length]];
-      const to = spots[ROUTE[(hopIndex + 1) % ROUTE.length]];
-      const ease = t * t * (3 - 2 * t);
-      const lift = Math.sin(Math.PI * t) * (8 + Math.abs(to.x - from.x) * 0.25);
-      const x = from.x + (to.x - from.x) * ease;
-      const y = from.y + (to.y - from.y) * ease - lift;
+      // position along the word: from a little before the F to a little past the w
+      const u = pass % 1;
+      const ease = u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2;
+      const first = spots[0];
+      const lastSpot = spots[spots.length - 1];
+      const span = lastSpot.x - first.x;
+      const x = first.x - span * 0.25 + span * 1.5 * ease;
+      // height follows the letters smoothly, interpolated between their landing spots
+      const along = Math.min(spots.length - 1.001, Math.max(0, ((x - first.x) / span) * (spots.length - 1)));
+      const k = Math.floor(along);
+      const f = along - k;
+      const blend = f * f * (3 - 2 * f);
+      const y = spots[k].y + (spots[k + 1].y - spots[k].y) * blend;
+      // fade in at the start of each glide and out at its end, so the loop has no seam
+      const edge = Math.min(1, u / 0.12, (1 - u) / 0.12);
 
-      // the droplet lags behind, so the pair stretches mid-hop and rounds out on landing
+      // the droplet lags behind, so the pair draws out into one long drop as it glides
       tailX += (x - tailX) * (1 - Math.exp(-dt / 0.06));
       tailY += (y - tailY) * (1 - Math.exp(-dt / 0.06));
       drop.setAttribute("cx", x.toFixed(2));
       drop.setAttribute("cy", y.toFixed(2));
       tail.setAttribute("cx", tailX.toFixed(2));
       tail.setAttribute("cy", tailY.toFixed(2));
-      layer.style.opacity = presence.toFixed(3);
+      layer.style.opacity = (presence * edge).toFixed(3);
 
       letters.forEach((letter, index) => {
         const spot = spots[index];
-        const near = Math.hypot(x - spot.x, (y - spot.y) * 0.6) / 14;
-        const lit = Math.exp(-near * near) * presence;
-        // squash only as the drop touches down, not while it passes overhead
-        const touch = lit * Math.max(0, 1 - Math.abs(y - spot.y) / 10);
+        const near = (x - spot.x) / 16;
+        const lit = Math.exp(-near * near) * presence * edge;
         letter.style.setProperty("--lit", lit.toFixed(3));
-        letter.style.setProperty("--touch", touch.toFixed(3));
       });
 
       if (active.current || presence > 0.01) {
@@ -95,7 +99,7 @@ export function FlowLogo() {
         frame = 0;
         presence = 0;
         layer.style.opacity = "0";
-        letters.forEach((letter) => { letter.style.setProperty("--lit", "0"); letter.style.setProperty("--touch", "0"); });
+        letters.forEach((letter) => letter.style.setProperty("--lit", "0"));
       }
     };
 
@@ -103,7 +107,7 @@ export function FlowLogo() {
       active.current = true;
       if (!frame) {
         measure();
-        hop = 0;
+        pass = 0;
         tailX = spots[0].x;
         tailY = spots[0].y;
         last = performance.now();

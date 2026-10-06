@@ -7,7 +7,8 @@
   --violet: #7a3cff;
   --line: rgba(238, 242, 244, 0.12);
 
-  --font-display: "Anybody", "Helvetica Neue", Arial, sans-serif;
+  --font-display: "Mr Dafoe", "Brush Script MT", cursive;
+  --font-headline: "Instrument Serif", Georgia, "Times New Roman", serif;
   --font-body: "Geist", "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
 
