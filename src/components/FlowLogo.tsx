@@ -31,6 +31,11 @@ export function FlowLogo() {
     const link = root.closest("a") ?? root;
     const letters = Array.from(root.querySelectorAll<HTMLSpanElement>("[data-letter]"));
     let spots: { x: number; y: number }[] = [];
+    // colour fill per letter: 0 is the resting white, 1 is the letter's full hue.
+    // A letter starts filling once the drop reaches it and keeps its colour
+    // while the logo is hovered; on leave every letter drains back to white.
+    const fills = letters.map(() => 0);
+    const reached = letters.map(() => false);
     let presence = 0; // 0 = no drop, 1 = drop fully there
     let pass = 0; // glides through the word so far; the fraction is progress through this one
     let tailX = 0;
@@ -91,15 +96,23 @@ export function FlowLogo() {
         const near = (x - spot.x) / 16;
         const lit = Math.exp(-near * near) * presence * edge;
         letter.style.setProperty("--lit", lit.toFixed(3));
+        if (active.current && x >= spot.x - 6) reached[index] = true;
+        const target = active.current && reached[index] ? 1 : 0;
+        fills[index] += (target - fills[index]) * (1 - Math.exp(-dt / (target ? 0.55 : 0.35)));
+        letter.style.setProperty("--fill", fills[index].toFixed(3));
       });
 
-      if (active.current || presence > 0.01) {
+      if (active.current || presence > 0.01 || fills.some((fill) => fill > 0.01)) {
         frame = requestAnimationFrame(tick);
       } else {
         frame = 0;
         presence = 0;
         layer.style.opacity = "0";
-        letters.forEach((letter) => letter.style.setProperty("--lit", "0"));
+        letters.forEach((letter, index) => {
+          fills[index] = 0;
+          letter.style.setProperty("--lit", "0");
+          letter.style.setProperty("--fill", "0");
+        });
       }
     };
 
@@ -108,6 +121,7 @@ export function FlowLogo() {
       if (!frame) {
         measure();
         pass = 0;
+        reached.fill(false);
         tailX = spots[0].x;
         tailY = spots[0].y;
         last = performance.now();

@@ -179,8 +179,9 @@ I wrote out the full sequence I wanted: the page opens loud, and the visitor's o
 | Static lettering during the colour flow | Asked for the letters themselves to flow |
 | Buttons and text always on screen | Asked for them to appear with interaction and recede when idle |
 | A hero that looked the same before and after interaction | Wrote the full noise → Flow sequence: distorted copy that the visitor's movement resolves, ending on Get Started |
-| A white logo beside a multicolour headline | Asked for the logo to carry the headline's colours, balanced: each letter takes its hue from the "Flow" gradient, softened at rest and full on hover |
+| A white logo beside a multicolour headline, then a logo coloured all the time | Asked for the headline's colours in the logo, but only on hover: it rests white and fills letter by letter, F to w, as the drop passes, then drains back to white |
 | A plain white hover on Get Started | Asked for a minimal, balanced gradient highlight around it: a 1.5px ring of the Flow gradient with a faint halo, on hover and keyboard focus |
+| A white inner outline on the focused Get Started, doubling up with the gradient ring | Asked for the stroke inside to go; only the gradient ring and soft glow remain |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection
