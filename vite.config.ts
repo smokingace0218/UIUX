@@ -28,4 +28,6 @@ function missingNeuformSources(): Plugin {
 
 export default defineConfig({
   plugins: [missingNeuformSources(), react()],
+  // the original hero, and the lens variant on its own page for comparison
+  build: { rollupOptions: { input: { main: resolve(__dirname, "index.html"), lens: resolve(__dirname, "lens.html") } } },
 });

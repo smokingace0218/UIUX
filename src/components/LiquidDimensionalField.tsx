@@ -78,7 +78,7 @@ const POINTER_TRACKING = `// liquid: where the pointer is in the scene, and whet
                 // tell the host page the pointer is moving, at most a few times a second
                 if (liquidLastMove - liquidLastPost > 200 && window.parent !== window) {
                     liquidLastPost = liquidLastMove;
-                    window.parent.postMessage({ flowPointer: true }, '*');
+                    window.parent.postMessage({ flowPointer: true, x: event.clientX / window.innerWidth, y: event.clientY / window.innerHeight }, '*');
                 }
             });
             document.documentElement.addEventListener('mouseleave', () => { liquidLastMove = -1e9; });

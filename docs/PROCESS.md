@@ -156,6 +156,17 @@ I wrote out the full sequence I wanted: the page opens loud, and the visitor's o
 |---|---|
 | ![Noise state](process/14-noise-on-open.png) | ![Flow state](process/15-flow-after-interaction.png) |
 
+### 10. A second direction: the lens variant
+
+To compare against the version above (left untouched), I asked for a variant that gives the motion a clearer meaning: fragmented movement → coordinated movement → clarity → calm. It runs on `lens.html` from the same components, through a `variant="lens"` option; the original page renders exactly as before.
+
+- **Interaction begins at the bubble:** the scene's order gathers about four times faster when the cursor is near the main bubble than elsewhere, so the change reads as reaching for it rather than as any movement at all.
+- **Clarity through a lens:** the sentence is held in two layers, one bent by the refraction filter and one clear. A glass oval, drawn like the bubbles with a thin-film rim, sweeps across from the bubble's side; the clear layer is revealed behind it. It is not a fade.
+- **Calm:** the bubbles join one current and the field slows, as in the original; the lens fades out as the sweep ends and Get Started takes the focus.
+- No new content was added: same copy, same CTA, no product features.
+
+![Lens sweeping across the tagline at three points in the transition](process/16-lens-variant-sweep.png)
+
 ## Where I directed or corrected the AI
 
 | AI output | My direction |

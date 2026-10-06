@@ -237,7 +237,17 @@ function easeInOutCubic(x: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-function useFlowOrder() {
+/* lens variant: order gathers fastest near the main bubble, so the change
+   reads as the visitor reaching for it rather than as any movement at all */
+const LENS = {
+  bubble: { x: 0.8, y: 0.56 }, // centre of the main bubble, as a fraction of the hero
+  reach: 0.3, // how far its pull extends, in the same units
+  floor: 0.25, // rise rate far from the bubble, relative to the rate beside it
+};
+
+type Variant = "ambient" | "lens";
+
+function useFlowOrder(variant: Variant) {
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     const section = ref.current;
@@ -246,7 +256,9 @@ function useFlowOrder() {
     const copyBend = section.querySelector<SVGFEDisplacementMapElement>("#flow-copy-bend");
     const copyField = section.querySelector<SVGFETurbulenceElement>("#flow-copy-field");
     const copySoften = section.querySelector<SVGFEGaussianBlurElement>("#flow-copy-soften");
-    const copy = section.querySelector<HTMLElement>(".flow-hero__lede");
+    const copy = section.querySelector<HTMLElement>(".flow-lens__blur") ?? section.querySelector<HTMLElement>(".flow-hero__lede");
+    const lens = variant === "lens";
+    let proximity = 1;
 
     let progress = 0;
     let lastMove = -Infinity;
@@ -260,7 +272,9 @@ function useFlowOrder() {
       section.style.setProperty("--order", order.toFixed(3));
       section.dataset.state = order >= 0.999 ? "flow" : order > 0.02 ? "settling" : "noise";
       // the copy reads as if seen through the moving bubbles until order settles it
-      const noise = 1 - order;
+      // in the lens variant the clear copy is revealed by the sweep, so the
+      // fragmented layer underneath stays fragmented until the sweep has passed
+      const noise = lens ? (order >= 0.999 ? 0 : 1 - 0.3 * order) : 1 - order;
       if (copy && copyBend && copyField && copySoften) {
         if (noise > 0.002) {
           copy.style.filter = "url(#flow-copy-refract)";
@@ -285,7 +299,8 @@ function useFlowOrder() {
       last = now;
       clock += dt;
       if (!locked) {
-        if (now - lastMove < ORDER.movingWindow) progress += dt / ORDER.riseSeconds;
+        const rate = lens ? LENS.floor + (1 - LENS.floor) * proximity : 1;
+        if (now - lastMove < ORDER.movingWindow) progress += (dt / ORDER.riseSeconds) * rate;
         else progress -= dt / ORDER.sinkSeconds;
         progress = Math.min(1, Math.max(0, progress));
         if (progress >= 1) locked = true;
@@ -305,12 +320,21 @@ function useFlowOrder() {
       locked = true;
       apply(1);
     };
-    const moved = () => {
+    const moved = (x?: number, y?: number) => {
       lastMove = performance.now();
+      if (lens && x !== undefined && y !== undefined) {
+        const dx = x - LENS.bubble.x;
+        const dy = y - LENS.bubble.y;
+        proximity = Math.exp(-(dx * dx + dy * dy) / (LENS.reach * LENS.reach));
+      }
+    };
+    const onPointer = (event: PointerEvent) => {
+      const box = section.getBoundingClientRect();
+      moved((event.clientX - box.left) / box.width, (event.clientY - box.top) / box.height);
     };
     // the background is its own frame; moves over it reach this page only as messages
     const onMessage = (event: MessageEvent) => {
-      if (event.data && event.data.flowPointer === true) moved();
+      if (event.data && event.data.flowPointer === true) moved(event.data.x, event.data.y);
       // a frame that has just loaded asks where things stand
       if (event.data && event.data.flowHello === true) {
         sent = -1;
@@ -340,13 +364,13 @@ function useFlowOrder() {
       raf = requestAnimationFrame(tick);
     }
 
-    window.addEventListener("pointermove", moved, { passive: true });
+    window.addEventListener("pointermove", onPointer, { passive: true });
     window.addEventListener("message", onMessage);
     section.addEventListener("focusin", onFocus);
     return () => {
       cancelAnimationFrame(raf);
       clearTimeout(touchTimer);
-      window.removeEventListener("pointermove", moved);
+      window.removeEventListener("pointermove", onPointer);
       window.removeEventListener("message", onMessage);
       section.removeEventListener("focusin", onFocus);
       delete section.dataset.state;
@@ -356,10 +380,12 @@ function useFlowOrder() {
   return ref;
 }
 
-export function FlowHero() {
-  const sectionRef = useFlowOrder();
+const COPY = "Everything you need to get your work done, without the noise.";
+
+export function FlowHero({ variant = "ambient" }: { variant?: Variant }) {
+  const sectionRef = useFlowOrder(variant);
   return (
-    <section ref={sectionRef} className="flow-hero" aria-labelledby="flow-hero-title">
+    <section ref={sectionRef} className="flow-hero" data-variant={variant} aria-labelledby="flow-hero-title">
       {/* decorative background: the pointer still reaches it, so the camera keeps its
           authored parallax and the liquid bubbles can reach toward the cursor */}
       <div className="flow-hero__bg shader-frame" aria-hidden="true">
@@ -381,9 +407,17 @@ export function FlowHero() {
           <span className="flow-hero__line flow-hero__lead">Let your work</span>
           <span className="flow-hero__line flow-hero__name"><FlowWord /></span>
         </h1>
-        <p className="flow-hero__lede">
-          Everything you need to get your work done, without the noise.
-        </p>
+        {variant === "lens" ? (
+          /* the sentence sits fragmented; a glass lens sweeps across it from the
+             bubble's side and leaves it clear behind */
+          <p className="flow-hero__lede flow-lens">
+            <span className="flow-lens__blur">{COPY}</span>
+            <span className="flow-lens__clear" aria-hidden="true">{COPY}</span>
+            <span className="flow-lens__glass" aria-hidden="true" />
+          </p>
+        ) : (
+          <p className="flow-hero__lede">{COPY}</p>
+        )}
         <div className="flow-hero__ctas">
           <a className="flow-button" href="#get-started">Get Started</a>
           <a className="flow-button flow-button--glass" href="#features">See how it works</a>
