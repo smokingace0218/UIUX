@@ -514,13 +514,24 @@ summary:focus-visible {
   paint-order: stroke fill;
 }
 
-/* each letter brightens and lifts a hair as the current passes through it */
+/* the logo carries the headline's colours: each letter takes the hue the
+   "Flow" gradient has at that point, F teal through w violet. At rest they are
+   softened toward the nav's ink so the small mark stays balanced beside the
+   headline; as the current passes, a letter deepens to its full hue, glows
+   and lifts a hair */
 .flow-logo__word [data-letter] {
   --lit: 0;
+  --hue: #28d3ca;
+  --rest: color-mix(in srgb, var(--hue) 70%, var(--ink));
   display: inline-block;
-  color: color-mix(in srgb, var(--tide) calc(var(--lit) * 100%), var(--ink));
+  color: color-mix(in srgb, var(--hue) calc(var(--lit) * 100%), var(--rest));
+  text-shadow: 0 0 calc(var(--lit) * 0.35em) color-mix(in srgb, var(--hue) calc(var(--lit) * 70%), transparent);
   transform: translateY(calc(var(--lit) * -0.03em));
 }
+
+.flow-logo__word [data-letter]:nth-child(2) { --hue: #59c0ee; }
+.flow-logo__word [data-letter]:nth-child(3) { --hue: #7297ff; }
+.flow-logo__word [data-letter]:nth-child(4) { --hue: #7851ff; }
 
 /* the drop layer shares the logo's coordinates; the drop arcs above the
    letters, outside this box, so it must not clip */

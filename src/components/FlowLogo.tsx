@@ -145,7 +145,7 @@ export function FlowLogo() {
           </filter>
           <linearGradient id="flow-drop-tide" x1="0" x2="1" y1="0" y2="1">
             <stop stopColor="#5ff5df" />
-            <stop offset="1" stopColor="#19d9bf" />
+            <stop offset="1" stopColor="#6fb7ff" />
           </linearGradient>
         </defs>
         <g ref={layerRef} filter="url(#flow-goo)" style={{ opacity: 0 }}>
