@@ -36,7 +36,11 @@ This is how I'll direct Claude Code to build the final Flow hero in one lean ses
 ## 2. Before the session
 
 1. Create `CLAUDE.md` at the repo root with the text below. Claude Code reads it automatically every session.
-2. Have the three ThreeUI source files ready: `vanguard-dimensional.html`, `NeuformIsolatedEffects.tsx` and `threeui.css`.
+2. Add the background to the repo (upload; don't paste it into the chat):
+   - `source/vanguard-dimensional.html`: the ThreeUI *Dimensional Field* source, unmodified.
+   - `source/LiquidDimensionalField.tsx`: my adaptation of it from an earlier exploration session (liquid glass bubbles, cursor response, free drift, the noise → Flow hooks).
+
+   That's all the background needs. The other ThreeUI files belong to the wider effect collection, and the page doesn't use them.
 
 ```markdown
 # Flow hero
@@ -52,8 +56,9 @@ ending with the copy sharp and Get Started as the clear action.
 - Fonts: Mr Dafoe (logo, "Flow"), Geist (everything else).
 - Palette: #19d9bf → #6fb7ff → #7a3cff on near-black #050608.
 - Motion glides, never bounces. Respect prefers-reduced-motion.
-- Background: ThreeUI Dimensional Field source, stored unmodified, adapted
-  by string transforms at load (fall back to the original if an anchor is missing).
+- Background: sourced from ThreeUI (Dimensional Field) and adapted by me in an
+  earlier session. Both are in source/: the original stays unmodified; my
+  adaptation transforms it at load. Use them as given.
 
 ## How to work
 - Build only what the prompt asks; don't explore alternatives or ask questions.
@@ -69,13 +74,13 @@ ending with the copy sharp and Get Started as the clear action.
 
 Send them one at a time and wait for each to finish.
 
-### Prompt 1: the stage
-**Purpose:** a reliable base; nothing visual is decided yet.
+### Prompt 1: the stage and the world
+**Purpose:** a reliable base, plus the atmosphere goal: a living world of glass bubbles before anyone interacts. The background was sourced from ThreeUI and adapted by me earlier, so this step places it rather than reinventing it.
 
-> Set up the project per CLAUDE.md. Render the attached Dimensional Field source full-bleed in a sandboxed `srcdoc` iframe behind a hero section, showing only its canvas. The iframe wrapper needs `pointer-events: auto` so the scene can react to the cursor. Add an empty header and hero content area. Store the source unmodified, with a transform hook ready for the next prompts.
+> Set up the project per CLAUDE.md. The background is in `source/`: the ThreeUI Dimensional Field original, which I sourced, and my adaptation, `LiquidDimensionalField.tsx`. Move both into `src/` and use them as given: render it full-bleed behind a hero section, with its wrapper at `pointer-events: auto`. Add an empty header and hero content area. Don't change the background code.
 
-### Prompt 2: the world becomes liquid glass
-**Purpose:** the atmosphere goal. The bubbles should feel like real glass in water, so the world feels alive before anyone interacts.
+### Prompt 2: (only if not bringing the adaptation) the world becomes liquid glass
+**Purpose:** the atmosphere goal. Skip this prompt if `LiquidDimensionalField.tsx` was provided in prompt 1; it already does all of this.
 
 > In the background transforms:
 > - **Glass:** each sphere is clear. It shows the background field bent through it (bend 0.05 + 0.12·fresnel), with a thin-film rainbow rim (0.38·fresnel), a small highlight (pow 220) and no tint in the centre.
