@@ -167,6 +167,17 @@ To compare against the version above (left untouched), I asked for a variant tha
 
 ![Lens sweeping across the tagline at three points in the transition](process/16-lens-variant-sweep.png)
 
+### 11. The logo's drop on the headline, and a travelling bubble
+
+Two refinements, on both pages:
+
+- **The drop on "Flow":** the logo's gliding water drop now rides the front of the colour as it pours through the large lettering, F to w, its height following the letters, with the same goo filter fusing it and its trailing droplet into one drawn-out drop.
+- **The small bubble travels:** the small upper bubble used to be pushed away from the cursor, so it slid off to the left. It now follows its own slow loop, a closed Catmull-Rom curve through the hero: from above and right of the headline, past the w of Flow, down to skim "without the noise.", toward the large bubble, then away and back up. It moves with mass: a damped spring behind its path point, a pace that eases up and down, a faint drift so no loop repeats exactly, and a slight stretch along its motion when it turns.
+- **Local reactions only:** where it passes the headline or copy, those are seen through it for a moment (a soft lens displacement, and a slight lift on the copy). Around it the background turbulence softens and the glow leans in. Near the large bubble it slows and curves toward it, and the large bubble leans very slightly back. Nothing else on the page changes state.
+- **The cursor is secondary:** a close, moving cursor adds a small attraction and a slight swell; once it moves on, the bubble carries on along its path.
+
+![The drop riding the pour through Flow](process/17-word-drop.png)
+
 ## Where I directed or corrected the AI
 
 | AI output | My direction |
@@ -193,6 +204,8 @@ To compare against the version above (left untouched), I asked for a variant tha
 | A white logo beside a multicolour headline, then a logo coloured all the time | Asked for the headline's colours in the logo, but only on hover: it rests white and fills letter by letter, F to w, as the drop passes, then drains back to white |
 | A plain white hover on Get Started | Asked for a minimal, balanced gradient highlight around it: a 1.5px ring of the Flow gradient with a faint halo, on hover and keyboard focus |
 | A white inner outline on the focused Get Started, doubling up with the gradient ring | Asked for the stroke inside to go; only the gradient ring and soft glow remain |
+| The logo's water drop missing from the headline | Asked for the same drop on the large "Flow" |
+| A small bubble that was pushed away by the cursor and slid off to the left | Specified its purpose and path: a lens travelling past the headline and "without the noise." toward the large bubble, with mass, local reactions only, and the cursor as a minor influence |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection
