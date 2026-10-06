@@ -17,10 +17,13 @@
   pointer-events: auto;
 }
 
+/* the shader reads the pointer itself (its camera follows the cursor), so it
+   opts back in; the text layer above passes every move through to it */
 .flow-hero__bg {
   position: absolute;
   inset: 0;
   z-index: -2;
+  pointer-events: auto;
   overflow: hidden;
   background: var(--void);
 }
