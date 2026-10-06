@@ -181,16 +181,30 @@ summary:focus-visible {
   padding: 48px clamp(16px, 6vw, 96px);
 }
 
-/* "Let Your Work" is a light, tightly set sans, quiet and even, so the one
-   brush-script word, "Flow", in the logo's hand, carries all the expression.
-   The same pairing as the page: plain type everywhere, script for the name. */
+/* a two-voice headline: "Let your work" as a small line of widely tracked
+   capitals, the way Butter sets its interface type, leading into the name
+   itself, large, in the logo's brush script. The size gap does the pairing:
+   the lead is quiet and upright, the name is loud and slanted, so they never
+   compete. Sizes run on one scale: the lead is about a ninth of the name. */
 .flow-hero__title {
   margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(7.5rem, 16.5vw, 19rem);
+  font-weight: 400;
+  line-height: 0.82;
+}
+
+.flow-hero__lead {
+  /* the script's ascenders rise about a quarter of its size above its line,
+     so the gap under the lead is a quarter of the name's size, not a fixed step */
+  margin-bottom: clamp(24px, 3.3vw, 62px);
+  color: #c9d0da;
   font-family: var(--font-body);
-  font-size: clamp(3.2rem, 8.6vw, 10.5rem);
-  font-weight: 300;
+  font-size: clamp(0.95rem, 1.45vw, 1.6rem);
+  font-weight: 500;
   line-height: 1;
-  letter-spacing: -0.045em;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
 }
 
 .flow-hero__line {
@@ -206,13 +220,8 @@ summary:focus-visible {
   /* positioned, so each letter's offsetLeft is measured from the word itself */
   position: relative;
   display: inline-block;
-  margin-left: 0.04em;
   padding-right: 0.04em;
-  /* the script's small x-height needs a larger size to sit level with the sans */
   font-family: var(--font-display);
-  font-size: 1.42em;
-  font-weight: 400;
-  line-height: 0.7;
   letter-spacing: 0;
   cursor: default;
 }
@@ -257,7 +266,7 @@ summary:focus-visible {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 44px;
+  margin-top: clamp(28px, 3.4vw, 52px);
 }
 
 .flow-hero__note {
@@ -408,7 +417,12 @@ summary:focus-visible {
   }
 
   .flow-hero__title {
-    font-size: clamp(2.4rem, 17vh, 6rem);
+    font-size: clamp(4.5rem, 34vh, 9rem);
+  }
+
+  .flow-hero__lead {
+    margin-bottom: 7vh;
+    font-size: 0.85rem;
   }
 
 

@@ -110,8 +110,8 @@ export function FlowHero() {
 
       <div className="flow-hero__content">
         <h1 id="flow-hero-title" className="flow-hero__title">
-          <span className="flow-hero__line">Let Your</span>
-          <span className="flow-hero__line">Work <FlowWord />.</span>
+          <span className="flow-hero__line flow-hero__lead">Let your work</span>
+          <span className="flow-hero__line flow-hero__name"><FlowWord /></span>
         </h1>
         <div className="flow-hero__ctas">
           <a className="flow-button" href="#get-started">Get Started</a>

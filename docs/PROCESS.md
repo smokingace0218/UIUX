@@ -100,7 +100,13 @@ This took the most rounds, and most of the direction came from me.
 3. **Bouncy vs flowing.** On the logo, I called out that the drop hopping between letters felt bouncy. It now glides F → w along one even path, each letter brightening as it passes.
 4. **A better typeface for the pour.** The pour animation came back, first in *Fraunces* italic, a readable calligraphic serif.
 5. **The logo's own hand.** I asked for the headline to use the logo's typeface and letter case, giving **Let Your Work Flow.** in title case.
-6. **Final: balance.** Set entirely in script, the line felt heavy, so through a comment on the preview I asked for "Let Your Work" in something that balances "Flow". It is now a light, tightly spaced sans (*Geist*, the same face as the buttons), and only **Flow** stays in the logo's brush script, carrying the gradient and the pour. It's the same pairing Butter uses: plain type everywhere, script only for the name. I also asked to remove the body copy under the headline, so the hero is just the headline and the call to action.
+6. **Balance.** Set entirely in script, the line felt heavy, so through a comment on the preview I asked for "Let Your Work" in something that balances "Flow". It became a light sans, and only **Flow** stayed in the logo's brush script. I also had the body copy under the headline removed.
+7. **Final: an explored pairing.** I asked for a proper exploration of font pairing and spacing. Claude rendered six pairings with the script **Flow**: light sans, serif, serif italic, soft serif, extra-light sans, and small tracked capitals over a large script. The tracked capitals won.
+   - **LET YOUR WORK** is set small in widely spaced Geist capitals, the way Butter sets its interface type, and **Flow** sits large beneath it in the logo's script, carrying the gradient and the pour.
+   - The size gap does the pairing: one voice is quiet and upright, the other loud and slanted, so they never compete.
+   - The spacing follows the type rather than fixed steps. The gap under the capitals is about a quarter of the script's size, because script ascenders rise that far above their line (a fixed gap let the F and l collide with the capitals).
+
+![Six pairings explored](process/13-font-pairing-exploration.png)
 
 Lesson for my workflow: when I ask for a change to one thing (here, the typeface), I need to say explicitly what to keep (the animation). The AI otherwise tends to redo everything.
 
@@ -142,6 +148,7 @@ I noticed the background bubbles were rigid: perfect spheres whose outlines stay
 | Rigid, perfectly round bubbles | Asked for liquid bubbles that flow toward the cursor |
 | Bubbles that turned sharp when reacting to the cursor | Asked for flowing without losing smoothness |
 | A headline set entirely in script, plus body copy | Asked for a balancing typeface for "Let Your Work", and removed the body copy |
+| One pairing applied without comparison | Asked for an exploration of pairing and spacing; chose from six rendered options |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection
