@@ -175,6 +175,8 @@ Two refinements, on both pages:
 - **The small bubble travels:** the small upper bubble used to be pushed away from the cursor, so it slid off to the left. It now follows its own slow loop, a closed Catmull-Rom curve through the hero: from above and right of the headline, past the w of Flow, down to skim "without the noise.", toward the large bubble, then away and back up. It moves with mass: a damped spring behind its path point, a pace that eases up and down, a faint drift so no loop repeats exactly, and a slight stretch along its motion when it turns.
 - **Local reactions only:** where it passes the headline or copy, those are seen through it for a moment (a soft lens displacement, and a slight lift on the copy). Around it the background turbulence softens and the glow leans in. Near the large bubble it slows and curves toward it, and the large bubble leans very slightly back. Nothing else on the page changes state.
 - **The cursor is secondary:** a close, moving cursor adds a small attraction and a slight swell; once it moves on, the bubble carries on along its path.
+- **It never enters the large bubble:** on touching, its inward motion rebounds at half strength, it flattens slightly against the rim and springs back round with a soft wobble, the large bubble gives way a touch, and it drifts away, not drawn back for several seconds.
+- **Lens variant:** the separate glass lens over the copy is gone, so no extra bubble appears. Instead the large bubble and the bottom-left one each travel a small, slow, uneven loop within their own corner, while the middle bubble keeps its free path.
 
 ![The drop riding the pour through Flow](process/17-word-drop.png)
 

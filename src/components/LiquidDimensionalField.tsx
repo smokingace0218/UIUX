@@ -86,11 +86,15 @@ const POINTER_TRACKING = `// liquid: where the pointer is in the scene, and whet
 
             // order: 0 is the noisy opening, 1 is the composed flow. The host page owns it.
             let liquidOrder = 0;
+            // which page this is: in the lens variant the edge bubbles also travel, on small loops
+            let liquidVariant = 'ambient';
+            let liquidCurve = 0;
             let liquidOrderGoal = 0;
             let liquidClock = 0;
             window.addEventListener('message', (event) => {
                 const order = event.data && event.data.flowOrder;
                 if (typeof order === 'number') liquidOrderGoal = Math.min(1, Math.max(0, order));
+                if (event.data && typeof event.data.flowVariant === 'string') liquidVariant = event.data.flowVariant;
             });
             if (window.parent !== window) window.parent.postMessage({ flowHello: true }, '*');
 
@@ -216,7 +220,8 @@ const RENDER_DRIFT = `// the travelling bubble moves first, so the others can re
                     if (!liquidTravel) {
                         liquidTravel = { s: 0, rate: 0, clock: 0, pos: traveller.mesh.position.clone(), vel: new THREE.Vector3(), prev: new THREE.Vector3(),
                             pull: new THREE.Vector3(), deform: 0, grow: 0, near: 0, radius: traveller.mesh.scale.x, z: traveller.mesh.position.z,
-                            point: [0, 0, 1], target: new THREE.Vector3(), big: 0, seen: false };
+                            point: [0, 0, 1], target: new THREE.Vector3(), big: 0, seen: false,
+                            cool: 0, kick: new THREE.Vector3(), sq: 0, sqVel: 0, sqGoal: 0, sqDir: new THREE.Vector3(1, 0, 0) };
                     }
                     const V = liquidTravel;
                     V.clock += liquidDt;
@@ -235,7 +240,9 @@ const RENDER_DRIFT = `// the travelling bubble moves first, so the others can re
                     const big = spheres[0].mesh;
                     const toBig = big.position.clone().sub(V.pos);
                     const gap = Math.max(0, toBig.length() - big.scale.x - V.radius);
-                    const bigGoal = Math.max(0, Math.min(1, 1 - gap / 3.2)) ** 2;
+                    // after a touch it is not drawn back for a while, so it can drift away
+                    V.cool = Math.max(0, V.cool - liquidDt);
+                    const bigGoal = V.cool > 0 ? 0 : Math.max(0, Math.min(1, 1 - gap / 3.2)) ** 2;
                     V.big += (bigGoal - V.big) * (1 - Math.exp(-liquidDt / 0.8));
                     toBig.z = 0;
                     V.target.add(toBig.normalize().multiplyScalar(0.55 * V.big));
@@ -251,11 +258,45 @@ const RENDER_DRIFT = `// the travelling bubble moves first, so the others can re
                     V.pull.lerp(toCursor.multiplyScalar(0.35 * V.near), 1 - Math.exp(-liquidDt / 0.7));
                     V.target.add(V.pull);
 
+                    // the large bubble is never entered: the path point is held outside its rim,
+                    // and a rebound from a touch carries on as a slowly fading drift
+                    V.kick.multiplyScalar(Math.exp(-liquidDt / 2.8));
+                    V.target.add(V.kick);
+                    const contact = big.scale.x + V.radius * 0.95;
+                    const away = V.target.clone().sub(big.position);
+                    away.z = 0;
+                    const reachIn = contact + 0.35 - away.length();
+                    if (reachIn > 0) V.target.add(away.normalize().multiplyScalar(reachIn));
+
                     // mass: a critically damped spring toward the target, so turns are rounded and late
                     const omega = 1.9;
                     V.prev.copy(V.vel);
                     V.vel.add(V.target.clone().sub(V.pos).multiplyScalar(omega * omega * liquidDt)).multiplyScalar(Math.exp(-2 * omega * liquidDt));
                     V.pos.addScaledVector(V.vel, liquidDt);
+
+                    // touching the large bubble: the inward motion rebounds at half strength, the
+                    // overlap eases out rather than snapping, and the small bubble flattens a little
+                    // against it, then springs back round with a soft wobble
+                    const normal = V.pos.clone().sub(big.position);
+                    normal.z = 0;
+                    const apart = Math.max(0.001, normal.length());
+                    normal.divideScalar(apart);
+                    const overlap = contact - apart;
+                    V.sqGoal = 0;
+                    if (overlap > -0.04) {
+                        const inward = V.vel.dot(normal);
+                        if (inward < 0) {
+                            V.vel.addScaledVector(normal, -inward * 1.5);
+                            V.kick.addScaledVector(normal, Math.min(0.9, 0.5 + -inward * 0.4));
+                            V.cool = 7;
+                        }
+                        if (overlap > 0) V.pos.addScaledVector(normal, overlap * (1 - Math.exp(-liquidDt / 0.12)));
+                        V.sqGoal = Math.min(0.14, 0.05 + Math.max(0, overlap) * 0.5 + Math.max(0, -inward) * 0.05);
+                        V.sqDir.copy(normal);
+                    }
+                    V.sqVel += (V.sqGoal - V.sq) * 49 * liquidDt;
+                    V.sqVel *= Math.exp(-2 * 0.42 * 7 * liquidDt);
+                    V.sq += V.sqVel * liquidDt;
                     traveller.mesh.position.copy(V.pos);
 
                     // a slight stretch along its motion when it changes direction, then round again
@@ -265,7 +306,10 @@ const RENDER_DRIFT = `// the travelling bubble moves first, so the others can re
                     const ex = V.vel.x * V.vel.x / sp2, ey = V.vel.y * V.vel.y / sp2;
                     V.grow += (0.04 * V.near + 0.02 * V.big - V.grow) * (1 - Math.exp(-liquidDt / 0.5));
                     const r = V.radius * (1 + V.grow);
-                    traveller.mesh.scale.set(r * (1 + V.deform * (2 * ex - 1)), r * (1 + V.deform * (2 * ey - 1)), r);
+                    // flattened along the contact normal, a little wider across it
+                    const nx2 = V.sqDir.x * V.sqDir.x, ny2 = V.sqDir.y * V.sqDir.y;
+                    const qx = 1 - V.sq * nx2 + 0.6 * V.sq * ny2, qy = 1 - V.sq * ny2 + 0.6 * V.sq * nx2;
+                    traveller.mesh.scale.set(r * (1 + V.deform * (2 * ex - 1)) * qx, r * (1 + V.deform * (2 * ey - 1)) * qy, r * (1 + 0.3 * V.sq));
 
                     // where it is on screen: for the background's local calm and for the page's lettering
                     const onScreen = V.pos.clone().project(camera);
@@ -275,6 +319,10 @@ const RENDER_DRIFT = `// the travelling bubble moves first, so the others can re
                     uniforms.u_lens.value.set(sx, 1 - sy, (radiusPx / window.innerHeight) * 2.2);
                     if (window.parent !== window) window.parent.postMessage({ flowLens: true, x: sx, y: sy, r: radiusPx, boost: V.near }, '*');
                 }
+
+                // lens variant: the large bubble and the bottom-left one each move on a small,
+                // slow curved loop of their own; it eases in, so nothing jumps when it starts
+                liquidCurve += ((liquidVariant === 'lens' ? 1 : 0) - liquidCurve) * (1 - Math.exp(-liquidDt / 2.5));
 
                 spheres.forEach((s, index) => {
                     if (index === 2 && liquidTravel) return;
@@ -306,12 +354,21 @@ const RENDER_DRIFT = `// the travelling bubble moves first, so the others can re
                         if (!L.lean) L.lean = new THREE.Vector3();
                         const toward = liquidTravel.pos.clone().sub(s.mesh.position);
                         toward.z = 0;
-                        L.lean.lerp(toward.normalize().multiplyScalar(0.22 * liquidTravel.big), 1 - Math.exp(-liquidDt / 0.9));
+                        // drawn toward it as it nears, and giving way a touch when it bumps
+                        L.lean.lerp(toward.normalize().multiplyScalar(0.22 * liquidTravel.big - 1.6 * Math.max(0, liquidTravel.sq)), 1 - Math.exp(-liquidDt / 0.9));
                         L.ox += L.lean.x * settle * 0.5;
                         L.oy += L.lean.y * settle * 0.5;
                     }
                     s.mesh.position.x = L.baseX + L.ox + currentX;
                     s.mesh.position.y += L.oy + currentY;
+                    if (liquidCurve > 0.001 && (index === 0 || index === 1)) {
+                        // an uneven ellipse: [x reach, y reach, angular speed, phase]; the large
+                        // bubble's loop is wider and slower, both stay within their own corner
+                        const loop = index === 0 ? [1.3, 0.85, 0.22, 0] : [1.0, 0.7, 0.29, 2.1];
+                        const a = liquidClock * loop[2] + loop[3];
+                        s.mesh.position.x += (Math.sin(a) + 0.18 * Math.sin(a * 2.3 + 1)) * loop[0] * liquidCurve;
+                        s.mesh.position.y += (Math.cos(a) + 0.15 * Math.sin(a * 1.7)) * loop[1] * liquidCurve;
+                    }
                     const size = radius * (1 + 0.07 * L.grow + (index === 0 && liquidTravel ? 0.012 * liquidTravel.big : 0));
                     s.mesh.scale.set(size, size, size);
                 });

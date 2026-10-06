@@ -591,8 +591,9 @@ summary:focus-visible {
 /* ── lens variant ──────────────────────────────────────────────
    fragmented → coordinated → clear → calm. The sentence is held in two
    layers: the fragmented one, bent by the refraction filter, and a clear
-   one on top. A glass lens, drawn like the bubbles, sweeps across from the
-   main bubble's side; the clear layer is revealed behind it. The sweep runs
+   one on top, revealed by a soft edge that sweeps across from the main
+   bubble's side. No extra lens is drawn: the scene's own bubbles carry the
+   glass, the middle one travelling freely past the copy. The sweep runs
    through the middle of the order range, so the scene has started to
    coordinate before the copy resolves, and has calmed by the time it is
    fully read. */
@@ -624,40 +625,4 @@ summary:focus-visible {
   inset: 0;
   -webkit-mask: linear-gradient(to right, transparent calc(var(--edge) - 10%), #000 calc(var(--edge) + 10%));
   mask: linear-gradient(to right, transparent calc(var(--edge) - 10%), #000 calc(var(--edge) + 10%));
-}
-
-/* the lens: a soft glass oval with a thin-film rim, brightening what it
-   passes over. It appears as the sweep starts and is gone when it ends. */
-.flow-lens__glass {
-  position: absolute;
-  top: 50%;
-  left: var(--edge);
-  width: 5.2em;
-  height: 4.4em;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  opacity: calc(var(--sweep) * (1 - var(--sweep)) * 3.6);
-  background: radial-gradient(ellipse at 34% 28%, rgba(255, 255, 255, 0.14), transparent 46%),
-    radial-gradient(ellipse at 50% 50%, rgba(111, 183, 255, 0.05), rgba(122, 60, 255, 0.07) 72%, transparent 74%);
-  box-shadow: inset 0 0 0 1px rgba(238, 242, 244, 0.1), inset 0 0 18px rgba(25, 217, 191, 0.12);
-  -webkit-backdrop-filter: brightness(1.18) saturate(1.3);
-  backdrop-filter: brightness(1.18) saturate(1.3);
-}
-
-.flow-lens__glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(from 200deg, #19d9bf, #6fb7ff, #7a3cff, rgba(255, 255, 255, 0.2), #19d9bf);
-  opacity: 0.55;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .flow-lens__glass { display: none; }
 }

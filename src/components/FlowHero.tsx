@@ -463,7 +463,7 @@ function useFlowOrder(variant: Variant) {
       }
       if (Math.abs(order - sent) > 0.002 || (order >= 1 && sent < 1)) {
         sent = order;
-        frame()?.contentWindow?.postMessage({ flowOrder: order }, "*");
+        frame()?.contentWindow?.postMessage({ flowOrder: order, flowVariant: variant }, "*");
       }
     };
 
@@ -606,12 +606,11 @@ export function FlowHero({ variant = "ambient" }: { variant?: Variant }) {
           <span className="flow-hero__line flow-hero__name"><FlowWord /></span>
         </h1>
         {variant === "lens" ? (
-          /* the sentence sits fragmented; a glass lens sweeps across it from the
+          /* the sentence sits fragmented; clarity sweeps across it from the
              bubble's side and leaves it clear behind */
           <p className="flow-hero__lede flow-lens">
             <span className="flow-lens__blur">{COPY}</span>
             <span className="flow-lens__clear" aria-hidden="true">{COPY}</span>
-            <span className="flow-lens__glass" aria-hidden="true" />
           </p>
         ) : (
           <p className="flow-hero__lede">{COPY}</p>
