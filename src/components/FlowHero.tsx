@@ -3,7 +3,7 @@ import { useEffect, useRef } from "react";
 import { LiquidDimensionalField } from "./LiquidDimensionalField";
 import "./FlowHero.css";
 
-const SIGNATURE_WORD = "flow";
+const SIGNATURE_WORD = "Flow";
 
 /* The headline word is poured, letter by letter. Each letter is a vessel: a
    bright liquid with a sloshing surface rises inside it, and the letter
@@ -110,8 +110,8 @@ export function FlowHero() {
 
       <div className="flow-hero__content">
         <h1 id="flow-hero-title" className="flow-hero__title">
-          <span className="flow-hero__line">Let your</span>
-          <span className="flow-hero__line">work <FlowWord />.</span>
+          <span className="flow-hero__line">Let Your</span>
+          <span className="flow-hero__line">Work <FlowWord />.</span>
         </h1>
         <p className="flow-hero__lede">
           Everything you need to get your work done, without the noise.

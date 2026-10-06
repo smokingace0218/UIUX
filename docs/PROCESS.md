@@ -98,15 +98,18 @@ This took the most rounds, and most of the direction came from me.
 1. **Liquid pour.** The first idea for the headline's "flow" treated each letter as a glass: liquid fills it and the letter expands, then the liquid pours into the next letter. I liked the animation, but the typeface (the narrow, wide-stretching *Anybody*) looked abstract.
 2. **A detour.** I asked for a better treatment and described a drop making each letter. Claude read that as a request for a new animation and built a drop that writes the word in brush script. The script wasn't readable at headline size, and I preferred the pour.
 3. **Bouncy vs flowing.** On the logo, I called out that the drop hopping between letters felt bouncy. It now glides F → w along one even path, each letter brightening as it passes.
-4. **Final:** the pour animation is back, in a better typeface. The whole headline is set in *Fraunces* italic, a readable calligraphic serif with a "softness" axis. "Let your work" is light; "flow" is heavier and carries the gradient. As liquid fills a letter, it swells bolder **and softer**, its curves rounding like a drop, so the typeface itself acts out the name.
+4. **A better typeface for the pour.** The pour animation came back, first in *Fraunces* italic, a readable calligraphic serif.
+5. **Final: the logo's own hand.** I asked for the headline to use the logo's typeface and letter case. It now reads **Let Your Work Flow.** in the same brush script as the logo (*Mr Dafoe*), in title case, so the wordmark and the headline read as one hand. "Flow" carries the gradient and the pour: liquid fills each letter, which swells slightly as it fills, then pours on to the next. The tagline stays in the plain sans-serif so it stays readable.
 
 Lesson for my workflow: when I ask for a change to one thing (here, the typeface), I need to say explicitly what to keep (the animation). The AI otherwise tends to redo everything.
 
 Bugs caught in testing:
 - A crash where the first frame's timestamp came before the start time, making time run backwards.
-- The tall **f** being cut off at the top and bottom, because the colour is only painted inside each letter's box.
+- Letters cut off where the script's swashes reached past their box. Fixed in two parts:
+  - each letter got room around it;
+  - the gradient was extended past both ends of the word, because the F's lead-in and the w's tail swash beyond the word and had no colour behind them.
 
-![Headline pour in Fraunces](process/10-headline-pour.png)
+![Headline pour in the logo's script](process/10-headline-pour.png)
 ![Logo glide on hover](process/09-logo-drop-on-hover.png)
 
 ### 8. Liquid bubbles
@@ -132,6 +135,7 @@ I noticed the background bubbles were rigid: perfect spheres whose outlines stay
 | Invented an automation product and its copy | Brought the copy back to the brief's productivity app, tagline and CTA |
 | A headline in an abstract, wide-stretching typeface | Asked for a typeface that suits the name |
 | Replaced the pour animation I liked with a new drop animation in an unreadable script | Asked for the original animation back, only in a better typeface |
+| Set the headline in a different typeface from the logo | Asked for the logo's typeface and letter case in the headline, so the brand reads as one hand |
 | Hops and squash in the logo animation | Called out the bouncy feel; the drop now glides |
 | Rigid, perfectly round bubbles | Asked for liquid bubbles that flow toward the cursor |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |

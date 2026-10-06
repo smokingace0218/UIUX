@@ -65,7 +65,6 @@
   align-items: center;
   font-family: var(--font-display);
   font-size: 1.3rem;
-  font-variation-settings: "wdth" 125, "wght" 700;
   letter-spacing: -0.01em;
 }
 
@@ -182,18 +181,17 @@ summary:focus-visible {
   padding: 48px clamp(16px, 6vw, 96px);
 }
 
-/* Fraunces italic: a calligraphic serif with a softness axis. The line is set
-   light and a little soft; "flow" is set heavier, and grows heavier and softer
-   still as liquid fills each letter */
+/* the headline is set in the logo's own brush script, in the logo's title
+   case, so the wordmark and the line read as one hand */
 .flow-hero__title {
   margin: 0;
-  font-family: var(--font-headline);
-  font-size: clamp(3.4rem, 9.2vw, 11rem);
-  font-style: italic;
-  font-weight: 300;
-  font-variation-settings: "opsz" 144, "wght" 300, "SOFT" 50, "WONK" 1;
-  line-height: 0.98;
-  letter-spacing: -0.015em;
+  font-family: var(--font-display);
+  font-size: clamp(3.8rem, 10.5vw, 12.5rem);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: 0.005em;
+  /* no thickening stroke here: at this size the brush is heavy enough, and the
+     gradient letters of "Flow" could not carry one, so the line stays even */
 }
 
 .flow-hero__line {
@@ -204,7 +202,7 @@ summary:focus-visible {
    letterform: on top, a bright liquid whose wavy surface sits at the letter's
    fill level and drifts sideways; underneath, the cyan-to-violet gradient,
    sized to the whole word so the letters read as one continuous sweep. As a
-   letter fills it swells heavier and softer, its curves rounding like a drop. */
+   letter fills it swells, rising a little from its baseline. */
 .flow-word {
   /* positioned, so each letter's offsetLeft is measured from the word itself */
   position: relative;
@@ -219,28 +217,25 @@ summary:focus-visible {
   --x: 0px;
   --w: 3em;
   display: inline-block;
-  /* the f's ascender and tail and the italic lean all reach past the letter
-     box; grow the painted box to keep them, and take the room back out of
-     the layout */
-  margin: -0.22em -0.08em;
-  padding: 0.22em 0.08em;
+  /* the brush strokes and swashes reach well past each letter box; grow the
+     painted box to keep them, and take the room back out of the layout */
+  margin: -0.32em -0.24em;
+  padding: 0.32em 0.24em;
   color: transparent;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 200' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='l' x1='0' x2='0' y1='0.5' y2='1'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='0.06' stop-color='%23d9fff8'/%3E%3Cstop offset='1' stop-color='%2363f2dc'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 100 Q15 91 30 100 T60 100 T90 100 T120 100 V200 H0 Z' fill='url(%23l)'/%3E%3C/svg%3E"),
     linear-gradient(100deg, var(--tide) 8%, #6fb7ff 48%, var(--violet) 92%);
   background-repeat: repeat-x, no-repeat;
-  background-size: 0.9em 200%, var(--w) 100%;
+  /* the gradient runs past both ends of the word, so the F's lead-in and the
+     w's tail, which swash beyond it, still have colour behind them */
+  background-size: 0.9em 200%, calc(var(--w) + 1.2em) 100%;
   background-position:
     calc(var(--slosh) * -0.01em) calc(var(--fill) * 100%),
-    calc(var(--x) * -1) 0;
+    calc(var(--x) * -1 - 0.6em) 0;
   -webkit-background-clip: text;
   background-clip: text;
-  font-variation-settings:
-    "opsz" 144,
-    "wght" calc(560 + var(--fill) * 340),
-    "SOFT" calc(var(--fill) * 100),
-    "WONK" 1;
-  transform: translateY(calc(var(--fill) * -0.02em));
+  transform-origin: 50% 80%;
+  transform: translateY(calc(var(--fill) * -0.03em)) scale(calc(1 + var(--fill) * 0.12));
 }
 
 .visually-hidden {
