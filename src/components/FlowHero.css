@@ -308,17 +308,6 @@ summary:focus-visible {
   margin-top: clamp(24px, 2.6vw, 40px);
 }
 
-.flow-hero__note {
-  margin: 0;
-  color: var(--mist);
-  font: 400 0.75rem / 1.5 var(--font-mono);
-  letter-spacing: 0.04em;
-}
-
-.flow-hero__note {
-  margin-top: 16px;
-}
-
 /* ── order: from noise to Flow (driven by useFlowOrder) ───────
    --order runs 0 to 1. The body copy starts dim behind the refraction and
    comes clear; Get Started is present throughout and becomes the strongest
@@ -336,10 +325,6 @@ summary:focus-visible {
 
 .flow-hero__lede {
   opacity: calc(0.42 + var(--order) * 0.58);
-}
-
-.flow-hero__note {
-  opacity: calc(var(--order) * 1);
 }
 
 .flow-hero__ctas .flow-button {
@@ -376,16 +361,11 @@ summary:focus-visible {
   .flow-hero__line,
   .flow-hero__lede,
   .flow-hero__ctas,
-  .flow-hero__note {
-    /* backwards only: once in, the elements are free to change with --order */
-    animation: flow-rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
-  }
 
   .flow-hero__line:nth-child(1) { animation-delay: 120ms; }
   .flow-hero__line:nth-child(2) { animation-delay: 220ms; }
   .flow-hero__lede { animation-delay: 380ms; }
   .flow-hero__ctas { animation-delay: 480ms; }
-  .flow-hero__note { animation-delay: 560ms; }
 }
 
 @keyframes flow-rise {
@@ -478,16 +458,12 @@ summary:focus-visible {
     max-width: 1280px;
   }
 
-
   .flow-hero__ctas .flow-button {
     min-height: 56px;
     padding: 0 32px;
     font-size: 1.05rem;
   }
 
-  .flow-hero__note {
-    font-size: 0.85rem;
-  }
 }
 
 /* ── short screens (phones held sideways): size by height ──── */
@@ -518,7 +494,6 @@ summary:focus-visible {
     font-size: 0.85rem;
   }
 
-
   .flow-hero__ctas {
     margin-top: 18px;
   }
@@ -528,9 +503,6 @@ summary:focus-visible {
     min-height: 44px;
   }
 
-  .flow-hero__note {
-    margin-top: 10px;
-  }
 }
 
 /* ── logo: a brush-script wordmark; on hover a drop glides through it (FlowLogo) ── */
@@ -586,43 +558,4 @@ summary:focus-visible {
   height: 100%;
   overflow: visible;
   pointer-events: none;
-}
-
-/* ── lens variant ──────────────────────────────────────────────
-   fragmented → coordinated → clear → calm. The sentence is held in two
-   layers: the fragmented one, bent by the refraction filter, and a clear
-   one on top, revealed by a soft edge that sweeps across from the main
-   bubble's side. No extra lens is drawn: the scene's own bubbles carry the
-   glass, the middle one travelling freely past the copy. The sweep runs
-   through the middle of the order range, so the scene has started to
-   coordinate before the copy resolves, and has calmed by the time it is
-   fully read. */
-.flow-hero[data-variant="lens"] {
-  --sweep: clamp(0, (var(--order) - 0.18) / 0.72, 1);
-  --edge: calc(118% - var(--sweep) * 136%);
-}
-
-.flow-hero[data-variant="lens"] .flow-hero__lede {
-  opacity: calc(0.55 + var(--order) * 0.45);
-}
-
-.flow-lens {
-  position: relative;
-}
-
-.flow-lens__blur,
-.flow-lens__clear {
-  display: block;
-}
-
-.flow-lens__blur {
-  -webkit-mask: linear-gradient(to right, #000 calc(var(--edge) - 10%), transparent calc(var(--edge) + 10%));
-  mask: linear-gradient(to right, #000 calc(var(--edge) - 10%), transparent calc(var(--edge) + 10%));
-}
-
-.flow-lens__clear {
-  position: absolute;
-  inset: 0;
-  -webkit-mask: linear-gradient(to right, transparent calc(var(--edge) - 10%), #000 calc(var(--edge) + 10%));
-  mask: linear-gradient(to right, transparent calc(var(--edge) - 10%), #000 calc(var(--edge) + 10%));
 }

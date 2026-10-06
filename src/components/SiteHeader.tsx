@@ -19,7 +19,16 @@ export function SiteHeader() {
 
   return (
     <header className="flow-nav">
-      <a className="flow-nav__brand" href="/" aria-label="Flow home">
+      <a
+        className="flow-nav__brand"
+        href="#top"
+        aria-label="Flow home"
+        // the logo starts the page over: a fresh load replays the arrival and the noise-to-Flow sequence
+        onClick={(event) => {
+          event.preventDefault();
+          window.location.reload();
+        }}
+      >
         <FlowLogo />
       </a>
       <nav className="flow-nav__links" aria-label="Primary">

@@ -28,14 +28,5 @@ function missingNeuformSources(): Plugin {
 
 export default defineConfig({
   plugins: [missingNeuformSources(), react()],
-  // two pages: the hero as decided (index.html, from src/original) and the lens
-  // variant (lens.html, from src/components). FLOW_PAGE=index or FLOW_PAGE=lens
-  // builds one page on its own as a single bundle, as the published previews use.
-  build: {
-    rollupOptions: {
-      input: process.env.FLOW_PAGE
-        ? resolve(__dirname, `${process.env.FLOW_PAGE}.html`)
-        : { main: resolve(__dirname, "index.html"), lens: resolve(__dirname, "lens.html") },
-    },
-  },
+
 });

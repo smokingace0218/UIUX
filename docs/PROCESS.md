@@ -156,29 +156,12 @@ I wrote out the full sequence I wanted: the page opens loud, and the visitor's o
 |---|---|
 | ![Noise state](process/14-noise-on-open.png) | ![Flow state](process/15-flow-after-interaction.png) |
 
-### 10. A second direction: the lens variant
+### 10. Final touches
 
-To compare against the version above (left untouched), I asked for a variant that gives the motion a clearer meaning: fragmented movement → coordinated movement → clarity → calm. It runs on `lens.html` from the same components, through a `variant="lens"` option; the original page renders exactly as before.
-
-- **Interaction begins at the bubble:** the scene's order gathers about four times faster when the cursor is near the main bubble than elsewhere, so the change reads as reaching for it rather than as any movement at all.
-- **Clarity through a lens:** the sentence is held in two layers, one bent by the refraction filter and one clear. A glass oval, drawn like the bubbles with a thin-film rim, sweeps across from the bubble's side; the clear layer is revealed behind it. It is not a fade.
-- **Calm:** the bubbles join one current and the field slows, as in the original; the lens fades out as the sweep ends and Get Started takes the focus.
-- No new content was added: same copy, same CTA, no product features.
-
-![Lens sweeping across the tagline at three points in the transition](process/16-lens-variant-sweep.png)
-
-### 11. The logo's drop on the headline, and a travelling bubble
-
-Two refinements. I first applied them to both pages, then decided to keep the main hero exactly as it stood before the variant (Version 17), so these now live only in the lens variant; the main page's code is kept as it was in `src/original`:
-
-- **The drop on "Flow":** the logo's gliding water drop now rides the front of the colour as it pours through the large lettering, F to w, its height following the letters, with the same goo filter fusing it and its trailing droplet into one drawn-out drop.
-- **The small bubble travels:** the small upper bubble used to be pushed away from the cursor, so it slid off to the left. It now follows its own slow loop, a closed Catmull-Rom curve through the hero: from above and right of the headline, past the w of Flow, down to skim "without the noise.", toward the large bubble, then away and back up. It moves with mass: a damped spring behind its path point, a pace that eases up and down, a faint drift so no loop repeats exactly, and a slight stretch along its motion when it turns.
-- **Local reactions only:** where it passes the headline or copy, those are seen through it for a moment (a soft lens displacement, and a slight lift on the copy). Around it the background turbulence softens and the glow leans in. Near the large bubble it slows and curves toward it, and the large bubble leans very slightly back. Nothing else on the page changes state.
-- **The cursor is secondary:** a close, moving cursor adds a small attraction and a slight swell; once it moves on, the bubble carries on along its path.
-- **It never enters the large bubble:** on touching, its inward motion rebounds at half strength, it flattens slightly against the rim and springs back round with a soft wobble, the large bubble gives way a touch, and it drifts away, not drawn back for several seconds.
-- **Lens variant:** the separate glass lens over the copy is gone, so no extra bubble appears. Instead the large bubble and the bottom-left one each travel a small, slow, uneven loop within their own corner, while the middle bubble keeps its free path.
-
-![The drop riding the pour through Flow](process/17-word-drop.png)
+- The line under the buttons ("Free for personal use. No card needed.") was removed.
+- All three visible bubbles were given some free movement: each wanders slowly within its own area, on unrelated rhythms so it never quite repeats, on top of the existing cursor response and the noise-to-Flow current. The large bubble sways gently and the small one roams furthest.
+- Clicking the logo now reloads the page, replaying the arrival and the noise-to-Flow sequence. Before, it linked to the site root, which on the preview host opened a "not found" page.
+- The published preview is a single bundle, checked on first load, on repeated reloads and after a logo click.
 
 ## Where I directed or corrected the AI
 
@@ -206,8 +189,7 @@ Two refinements. I first applied them to both pages, then decided to keep the ma
 | A white logo beside a multicolour headline, then a logo coloured all the time | Asked for the headline's colours in the logo, but only on hover: it rests white and fills letter by letter, F to w, as the drop passes, then drains back to white |
 | A plain white hover on Get Started | Asked for a minimal, balanced gradient highlight around it: a 1.5px ring of the Flow gradient with a faint halo, on hover and keyboard focus |
 | A white inner outline on the focused Get Started, doubling up with the gradient ring | Asked for the stroke inside to go; only the gradient ring and soft glow remain |
-| The logo's water drop missing from the headline | Asked for the same drop on the large "Flow" |
-| A small bubble that was pushed away by the cursor and slid off to the left | Specified its purpose and path: a lens travelling past the headline and "without the noise." toward the large bubble, with mass, local reactions only, and the cursor as a minor influence |
+| A logo link to the site root, which showed "not found" in the preview | Asked for the logo click to refresh the page |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection

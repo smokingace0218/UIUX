@@ -60,8 +60,7 @@ const UNIFORMS_ANCHOR = "u_color2: { value: new THREE.Color(0.4, 0.0, 0.9) }  //
 const UNIFORMS_ADDED = `${UNIFORMS_ANCHOR}
                 ,u_pointer: { value: new THREE.Vector3(0, 0, 0) },
                 u_pull: { value: 0 },
-                u_order: { value: 0 },
-                u_lens: { value: new THREE.Vector3(0.5, 0.5, 0.0001) }`;
+                u_order: { value: 0 }`;
 
 // the pointer, carried into world units on the z = 0 plane the spheres sit around
 const POINTER_ANCHOR = "const resize = () => {";
@@ -79,61 +78,20 @@ const POINTER_TRACKING = `// liquid: where the pointer is in the scene, and whet
                 // tell the host page the pointer is moving, at most a few times a second
                 if (liquidLastMove - liquidLastPost > 200 && window.parent !== window) {
                     liquidLastPost = liquidLastMove;
-                    window.parent.postMessage({ flowPointer: true, x: event.clientX / window.innerWidth, y: event.clientY / window.innerHeight }, '*');
+                    window.parent.postMessage({ flowPointer: true }, '*');
                 }
             });
             document.documentElement.addEventListener('mouseleave', () => { liquidLastMove = -1e9; });
 
             // order: 0 is the noisy opening, 1 is the composed flow. The host page owns it.
             let liquidOrder = 0;
-            // which page this is: in the lens variant the edge bubbles also travel, on small loops
-            let liquidVariant = 'ambient';
-            let liquidCurve = 0;
             let liquidOrderGoal = 0;
             let liquidClock = 0;
             window.addEventListener('message', (event) => {
                 const order = event.data && event.data.flowOrder;
                 if (typeof order === 'number') liquidOrderGoal = Math.min(1, Math.max(0, order));
-                if (event.data && typeof event.data.flowVariant === 'string') liquidVariant = event.data.flowVariant;
             });
             if (window.parent !== window) window.parent.postMessage({ flowHello: true }, '*');
-
-            // the travelling bubble: the small sphere follows its own soft loop
-            // through the hero, in screen fractions (x from the left, y from the
-            // top), with a dwell factor that slows it at the moments that matter.
-            // upper centre-left, past the w of Flow, down to skim "without the
-            // noise.", toward the large bubble, then away and back up.
-            const TRAVEL_PATH = [
-                [0.40, 0.17, 1.0],
-                [0.44, 0.28, 1.0],
-                [0.41, 0.44, 0.75],
-                [0.35, 0.55, 0.95],
-                [0.295, 0.635, 0.5],
-                [0.39, 0.72, 0.9],
-                [0.52, 0.66, 0.55],
-                [0.575, 0.51, 0.65],
-                [0.54, 0.34, 1.0],
-                [0.46, 0.21, 1.1],
-            ];
-            const travelRay = new THREE.Vector3();
-            const travelAt = (fx, fy, z, out) => {
-                travelRay.set(fx * 2 - 1, -(fy * 2 - 1), 0.5).unproject(camera).sub(camera.position).normalize();
-                return out.copy(camera.position).add(travelRay.multiplyScalar((z - camera.position.z) / travelRay.z));
-            };
-            const travelPoint = (s, out) => {
-                // closed Catmull-Rom through the waypoints: no corners, no straight runs
-                const n = TRAVEL_PATH.length;
-                const i = Math.floor(s) % n;
-                const t = s - Math.floor(s);
-                const p0 = TRAVEL_PATH[(i + n - 1) % n], p1 = TRAVEL_PATH[i], p2 = TRAVEL_PATH[(i + 1) % n], p3 = TRAVEL_PATH[(i + 2) % n];
-                const cr = (a, b, c, d) => 0.5 * (2 * b + (c - a) * t + (2 * a - 5 * b + 4 * c - d) * t * t + (3 * b - a - 3 * c + d) * t * t * t);
-                const ease = t * t * (3 - 2 * t);
-                out[0] = cr(p0[0], p1[0], p2[0], p3[0]);
-                out[1] = cr(p0[1], p1[1], p2[1], p3[1]);
-                out[2] = p1[2] + (p2[2] - p1[2]) * ease;
-                return out;
-            };
-            let liquidTravel = null;
 
             ${POINTER_ANCHOR}`;
 
@@ -214,118 +172,7 @@ const GLASS_REFRACTION = `varying vec3 vNormal;
 // and grows a little, then floats back. Springs are timed in seconds, so the
 // motion is the same at any frame rate.
 const RENDER_ANCHOR = "renderer.render(scene, camera);";
-const RENDER_DRIFT = `// the travelling bubble moves first, so the others can respond to where it is
-                const traveller = spheres[2];
-                if (traveller) {
-                    if (!liquidTravel) {
-                        liquidTravel = { s: 0, rate: 0, clock: 0, pos: traveller.mesh.position.clone(), vel: new THREE.Vector3(), prev: new THREE.Vector3(),
-                            pull: new THREE.Vector3(), deform: 0, grow: 0, near: 0, radius: traveller.mesh.scale.x, z: traveller.mesh.position.z,
-                            point: [0, 0, 1], target: new THREE.Vector3(), big: 0, seen: false,
-                            cool: 0, kick: new THREE.Vector3(), sq: 0, sqVel: 0, sqGoal: 0, sqDir: new THREE.Vector3(1, 0, 0) };
-                    }
-                    const V = liquidTravel;
-                    V.clock += liquidDt;
-                    travelPoint(V.s, V.point);
-                    // a slow, uneven pace: eased toward the target so it gathers and sheds speed with mass
-                    const pace = 0.24 * V.point[2] * (1 + 0.14 * Math.sin(V.clock * 0.071) + 0.08 * Math.sin(V.clock * 0.19 + 2)) * (1 - 0.35 * V.big);
-                    V.rate += (pace - V.rate) * (1 - Math.exp(-liquidDt / 1.4));
-                    V.s = (V.s + V.rate * liquidDt) % TRAVEL_PATH.length;
-                    // a faint drift that never repeats with the loop
-                    const fx = V.point[0] + Math.sin(V.clock * 0.13) * 0.012 + Math.sin(V.clock * 0.051 + 1) * 0.008;
-                    const fy = V.point[1] + Math.sin(V.clock * 0.17 + 1.3) * 0.010;
-                    travelAt(fx, fy, V.z, V.target);
-                    if (!V.seen) { V.pos.copy(V.target); V.seen = true; }
-
-                    // the large bubble draws it in a little as it passes, and it slows
-                    const big = spheres[0].mesh;
-                    const toBig = big.position.clone().sub(V.pos);
-                    const gap = Math.max(0, toBig.length() - big.scale.x - V.radius);
-                    // after a touch it is not drawn back for a while, so it can drift away
-                    V.cool = Math.max(0, V.cool - liquidDt);
-                    const bigGoal = V.cool > 0 ? 0 : Math.max(0, Math.min(1, 1 - gap / 3.2)) ** 2;
-                    V.big += (bigGoal - V.big) * (1 - Math.exp(-liquidDt / 0.8));
-                    toBig.z = 0;
-                    V.target.add(toBig.normalize().multiplyScalar(0.55 * V.big));
-
-                    // the cursor is only a small secondary pull: a little attraction while it is
-                    // close and moving, never a tether; once it moves on, the path takes over again
-                    const toCursor = uniforms.u_pointer.value.clone().sub(V.pos);
-                    toCursor.z = 0;
-                    const reach = Math.max(0, Math.min(1, 1 - (toCursor.length() - V.radius) / 2.4));
-                    const nearGoal = uniforms.u_pull.value * reach * reach;
-                    V.near += (nearGoal - V.near) * (1 - Math.exp(-liquidDt / 0.6));
-                    if (toCursor.length() > 0.6) toCursor.setLength(0.6);
-                    V.pull.lerp(toCursor.multiplyScalar(0.35 * V.near), 1 - Math.exp(-liquidDt / 0.7));
-                    V.target.add(V.pull);
-
-                    // the large bubble is never entered: the path point is held outside its rim,
-                    // and a rebound from a touch carries on as a slowly fading drift
-                    V.kick.multiplyScalar(Math.exp(-liquidDt / 2.8));
-                    V.target.add(V.kick);
-                    const contact = big.scale.x + V.radius * 0.95;
-                    const away = V.target.clone().sub(big.position);
-                    away.z = 0;
-                    const reachIn = contact + 0.35 - away.length();
-                    if (reachIn > 0) V.target.add(away.normalize().multiplyScalar(reachIn));
-
-                    // mass: a critically damped spring toward the target, so turns are rounded and late
-                    const omega = 1.9;
-                    V.prev.copy(V.vel);
-                    V.vel.add(V.target.clone().sub(V.pos).multiplyScalar(omega * omega * liquidDt)).multiplyScalar(Math.exp(-2 * omega * liquidDt));
-                    V.pos.addScaledVector(V.vel, liquidDt);
-
-                    // touching the large bubble: the inward motion rebounds at half strength, the
-                    // overlap eases out rather than snapping, and the small bubble flattens a little
-                    // against it, then springs back round with a soft wobble
-                    const normal = V.pos.clone().sub(big.position);
-                    normal.z = 0;
-                    const apart = Math.max(0.001, normal.length());
-                    normal.divideScalar(apart);
-                    const overlap = contact - apart;
-                    V.sqGoal = 0;
-                    if (overlap > -0.04) {
-                        const inward = V.vel.dot(normal);
-                        if (inward < 0) {
-                            V.vel.addScaledVector(normal, -inward * 1.5);
-                            V.kick.addScaledVector(normal, Math.min(0.9, 0.5 + -inward * 0.4));
-                            V.cool = 7;
-                        }
-                        if (overlap > 0) V.pos.addScaledVector(normal, overlap * (1 - Math.exp(-liquidDt / 0.12)));
-                        V.sqGoal = Math.min(0.14, 0.05 + Math.max(0, overlap) * 0.5 + Math.max(0, -inward) * 0.05);
-                        V.sqDir.copy(normal);
-                    }
-                    V.sqVel += (V.sqGoal - V.sq) * 49 * liquidDt;
-                    V.sqVel *= Math.exp(-2 * 0.42 * 7 * liquidDt);
-                    V.sq += V.sqVel * liquidDt;
-                    traveller.mesh.position.copy(V.pos);
-
-                    // a slight stretch along its motion when it changes direction, then round again
-                    const accel = liquidDt > 0 ? V.vel.clone().sub(V.prev).length() / liquidDt : 0;
-                    V.deform += (Math.min(0.06, accel * 0.06) - V.deform) * (1 - Math.exp(-liquidDt / 0.35));
-                    const sp2 = V.vel.x * V.vel.x + V.vel.y * V.vel.y + 1e-4;
-                    const ex = V.vel.x * V.vel.x / sp2, ey = V.vel.y * V.vel.y / sp2;
-                    V.grow += (0.04 * V.near + 0.02 * V.big - V.grow) * (1 - Math.exp(-liquidDt / 0.5));
-                    const r = V.radius * (1 + V.grow);
-                    // flattened along the contact normal, a little wider across it
-                    const nx2 = V.sqDir.x * V.sqDir.x, ny2 = V.sqDir.y * V.sqDir.y;
-                    const qx = 1 - V.sq * nx2 + 0.6 * V.sq * ny2, qy = 1 - V.sq * ny2 + 0.6 * V.sq * nx2;
-                    traveller.mesh.scale.set(r * (1 + V.deform * (2 * ex - 1)) * qx, r * (1 + V.deform * (2 * ey - 1)) * qy, r * (1 + 0.3 * V.sq));
-
-                    // where it is on screen: for the background's local calm and for the page's lettering
-                    const onScreen = V.pos.clone().project(camera);
-                    const rim = V.pos.clone().add(new THREE.Vector3(r, 0, 0)).project(camera);
-                    const sx = (onScreen.x + 1) / 2, sy = (1 - onScreen.y) / 2;
-                    const radiusPx = Math.abs(rim.x - onScreen.x) / 2 * window.innerWidth;
-                    uniforms.u_lens.value.set(sx, 1 - sy, (radiusPx / window.innerHeight) * 2.2);
-                    if (window.parent !== window) window.parent.postMessage({ flowLens: true, x: sx, y: sy, r: radiusPx, boost: V.near }, '*');
-                }
-
-                // lens variant: the large bubble and the bottom-left one each move on a small,
-                // slow curved loop of their own; it eases in, so nothing jumps when it starts
-                liquidCurve += ((liquidVariant === 'lens' ? 1 : 0) - liquidCurve) * (1 - Math.exp(-liquidDt / 2.5));
-
-                spheres.forEach((s, index) => {
-                    if (index === 2 && liquidTravel) return;
+const RENDER_DRIFT = `spheres.forEach((s, index) => {
                     if (!s.liquid) s.liquid = { baseX: s.mesh.position.x, baseScale: s.mesh.scale.x, ox: 0, oy: 0, grow: 0 };
                     const L = s.liquid;
                     const radius = L.baseScale;
@@ -349,27 +196,18 @@ const RENDER_DRIFT = `// the travelling bubble moves first, so the others can re
                     L.ox += ((dx / distance) * push - L.ox) * settle;
                     L.oy += ((dy / distance) * push - L.oy) * settle;
                     L.grow += (near - L.grow) * (1 - Math.exp(-liquidDt / 0.5));
-                    // the large bubble leans very slightly toward the traveller as it passes
-                    if (index === 0 && liquidTravel) {
-                        if (!L.lean) L.lean = new THREE.Vector3();
-                        const toward = liquidTravel.pos.clone().sub(s.mesh.position);
-                        toward.z = 0;
-                        // drawn toward it as it nears, and giving way a touch when it bumps
-                        L.lean.lerp(toward.normalize().multiplyScalar(0.22 * liquidTravel.big - 1.6 * Math.max(0, liquidTravel.sq)), 1 - Math.exp(-liquidDt / 0.9));
-                        L.ox += L.lean.x * settle * 0.5;
-                        L.oy += L.lean.y * settle * 0.5;
-                    }
                     s.mesh.position.x = L.baseX + L.ox + currentX;
                     s.mesh.position.y += L.oy + currentY;
-                    if (liquidCurve > 0.001 && (index === 0 || index === 1)) {
-                        // an uneven ellipse: [x reach, y reach, angular speed, phase]; the large
-                        // bubble's loop is wider and slower, both stay within their own corner
-                        const loop = index === 0 ? [1.3, 0.85, 0.22, 0] : [1.0, 0.7, 0.29, 2.1];
-                        const a = liquidClock * loop[2] + loop[3];
-                        s.mesh.position.x += (Math.sin(a) + 0.18 * Math.sin(a * 2.3 + 1)) * loop[0] * liquidCurve;
-                        s.mesh.position.y += (Math.cos(a) + 0.15 * Math.sin(a * 1.7)) * loop[1] * liquidCurve;
+                    // free movement: each visible bubble also wanders on its own, slowly and
+                    // never quite repeating (unrelated frequencies), within a reach set by its
+                    // size, so the large one sways gently and the small one roams furthest
+                    const roam = [[0.9, 0.6, 1.0], [1.1, 0.8, 1.3], [1.9, 1.4, 1.7]][index];
+                    if (roam) {
+                        const w = liquidClock * 0.11 * roam[2] + index * 2.4;
+                        s.mesh.position.x += (Math.sin(w) * 0.7 + Math.sin(w * 2.31 + 1.1) * 0.3) * roam[0];
+                        s.mesh.position.y += (Math.cos(w * 0.83 + 0.4) * 0.7 + Math.sin(w * 1.73 + 2.2) * 0.3) * roam[1];
                     }
-                    const size = radius * (1 + 0.07 * L.grow + (index === 0 && liquidTravel ? 0.012 * liquidTravel.big : 0));
+                    const size = radius * (1 + 0.07 * L.grow);
                     s.mesh.scale.set(size, size, size);
                 });
 
@@ -379,17 +217,11 @@ const RENDER_DRIFT = `// the travelling bubble moves first, so the others can re
 // order uniform there gives it to each of them
 const NOISE_ANCHOR = "vec3 permute(vec3 x) { return mod(((x*34.0)+1.0)*x, 289.0); }";
 const NOISE_WITH_ORDER = `uniform float u_order;
-                uniform vec3 u_lens;
                 ${NOISE_ANCHOR}`;
 
 // the background field: its turbulence quietens as order rises
 const BG_DISTORT = "st += vec2(snoise(st + u_time * 0.04), snoise(st - u_time * 0.04)) * 0.4;";
-// around the travelling bubble the turbulence softens and the glow leans toward it
-const BG_DISTORT_ORDERED = `vec2 lensD = gl_FragCoord.xy / u_resolution.xy - u_lens.xy;
-                        lensD.x *= u_resolution.x / u_resolution.y;
-                        float lensF = exp(-dot(lensD, lensD) / (u_lens.z * u_lens.z));
-                        st += vec2(snoise(st + u_time * 0.04), snoise(st - u_time * 0.04)) * (0.4 - 0.18 * u_order) * (1.0 - 0.3 * lensF);
-                        st -= lensD * 0.06 * lensF;`;
+const BG_DISTORT_ORDERED = "st += vec2(snoise(st + u_time * 0.04), snoise(st - u_time * 0.04)) * (0.4 - 0.18 * u_order);";
 
 // only the canvas shows; the authored page around it is hidden but left in place
 const ISOLATE_STYLE = `<style>
