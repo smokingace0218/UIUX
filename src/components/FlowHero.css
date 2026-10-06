@@ -1,0 +1,343 @@
+.flow-hero {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: max(100dvh, 640px);
+  overflow: hidden;
+  background: var(--void);
+  /* the layer above the shader lets the pointer through to it; only things
+     you can click opt back in */
+  pointer-events: none;
+}
+
+.flow-hero a,
+.flow-hero button,
+.flow-word {
+  pointer-events: auto;
+}
+
+.flow-hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  background: var(--void);
+}
+
+/* keeps the copy readable over the brightest beams without hiding the spheres */
+.flow-hero__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(90deg, rgba(5, 6, 8, 0.72) 0%, rgba(5, 6, 8, 0.38) 42%, rgba(5, 6, 8, 0) 70%),
+    linear-gradient(180deg, rgba(5, 6, 8, 0.5) 0%, rgba(5, 6, 8, 0) 18%, rgba(5, 6, 8, 0) 78%, rgba(5, 6, 8, 0.6) 100%);
+}
+
+/* ── navigation ────────────────────────────────────────────── */
+
+.flow-nav {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px clamp(16px, 4vw, 56px);
+}
+
+.flow-nav a:not(.flow-button),
+.flow-nav button {
+  color: inherit;
+  text-decoration: none;
+}
+
+.flow-nav__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-variation-settings: "wdth" 125, "wght" 700;
+  letter-spacing: -0.01em;
+}
+
+.flow-mark {
+  width: 30px;
+  height: 30px;
+  color: var(--ink);
+}
+
+.flow-nav__links {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(10, 12, 16, 0.42);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.flow-nav__links a {
+  padding: 8px 16px;
+  border-radius: 999px;
+  color: var(--mist);
+  font-size: 0.875rem;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.flow-nav__links a:hover {
+  color: var(--ink);
+  background: rgba(238, 242, 244, 0.06);
+}
+
+.flow-nav__actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.flow-nav__signin {
+  color: var(--mist) !important;
+  font-size: 0.875rem;
+  transition: color 160ms ease;
+}
+
+.flow-nav__signin:hover {
+  color: var(--ink) !important;
+}
+
+.flow-nav__menu {
+  display: none;
+  padding: 9px 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(10, 12, 16, 0.5);
+  font: 500 0.75rem / 1 var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.flow-nav__sheet {
+  display: none;
+}
+
+/* ── buttons ───────────────────────────────────────────────── */
+
+.flow-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0 26px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--void);
+  background: var(--ink);
+  font: 500 0.95rem / 1 var(--font-body);
+  text-decoration: none;
+  transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), background 180ms ease, box-shadow 180ms ease;
+}
+
+.flow-button:hover {
+  background: #ffffff;
+  box-shadow: 0 0 0 6px rgba(25, 217, 191, 0.12);
+  transform: translateY(-1px);
+}
+
+.flow-button--small {
+  min-height: 38px;
+  padding: 0 18px;
+  font-size: 0.875rem;
+}
+
+.flow-button--glass {
+  border-color: var(--line);
+  color: var(--ink);
+  background: rgba(238, 242, 244, 0.06);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+}
+
+.flow-button--glass:hover {
+  background: rgba(238, 242, 244, 0.12);
+  box-shadow: none;
+}
+
+.flow-hero a:focus-visible,
+.flow-hero button:focus-visible {
+  outline: 2px solid var(--tide);
+  outline-offset: 3px;
+}
+
+/* ── headline and copy ─────────────────────────────────────── */
+
+.flow-hero__content {
+  align-self: center;
+  max-width: 900px;
+  padding: 48px clamp(16px, 6vw, 96px);
+}
+
+.flow-hero__title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(3.4rem, 10.5vw, 9.5rem);
+  font-weight: 300;
+  font-variation-settings: "wdth" 72, "wght" 300;
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+}
+
+.flow-hero__line {
+  display: block;
+}
+
+/* the signature word: one gradient across the whole word, sampled from the
+   shader's two beam colours, with every letter carrying its own swell */
+.flow-word {
+  display: inline-block;
+  padding-right: 0.04em;
+  color: transparent;
+  background: linear-gradient(100deg, var(--tide) 8%, #6fb7ff 48%, var(--violet) 92%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  cursor: default;
+}
+
+.flow-word [data-letter] {
+  --swell: 0;
+  display: inline-block;
+  font-variation-settings: "wdth" calc(100 + var(--swell) * 50), "wght" calc(640 + var(--swell) * 260);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.flow-hero__lede {
+  max-width: 44ch;
+  margin: 28px 0 0;
+  color: #b7bfcb;
+  font-size: clamp(1rem, 1.3vw, 1.15rem);
+  font-weight: 300;
+  line-height: 1.6;
+}
+
+.flow-hero__ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 36px;
+}
+
+.flow-hero__note,
+.flow-hero__connects {
+  margin: 0;
+  color: var(--mist);
+  font: 400 0.75rem / 1.5 var(--font-mono);
+  letter-spacing: 0.04em;
+}
+
+.flow-hero__note {
+  margin-top: 16px;
+}
+
+.flow-hero__connects {
+  padding: 22px clamp(16px, 6vw, 96px) 28px;
+  border-top: 1px solid var(--line);
+  margin: 0 clamp(16px, 4vw, 56px);
+  padding-left: clamp(0px, 2vw, 40px);
+}
+
+/* ── load sequence ─────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: no-preference) {
+  .flow-nav,
+  .flow-hero__line,
+  .flow-hero__lede,
+  .flow-hero__ctas,
+  .flow-hero__note,
+  .flow-hero__connects {
+    animation: flow-rise 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+
+  .flow-hero__line:nth-child(1) { animation-delay: 120ms; }
+  .flow-hero__line:nth-child(2) { animation-delay: 220ms; }
+  .flow-hero__lede { animation-delay: 380ms; }
+  .flow-hero__ctas { animation-delay: 480ms; }
+  .flow-hero__note { animation-delay: 560ms; }
+  .flow-hero__connects { animation-delay: 680ms; }
+}
+
+@keyframes flow-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+/* ── small screens ─────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  .flow-nav__links,
+  .flow-nav__signin {
+    display: none;
+  }
+
+  .flow-nav__menu {
+    display: inline-flex;
+  }
+
+  .flow-nav__sheet[data-open="true"] {
+    position: absolute;
+    top: 100%;
+    right: 16px;
+    left: 16px;
+    z-index: 5;
+    display: grid;
+    gap: 2px;
+    padding: 8px;
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    background: #0a0c10;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    pointer-events: auto;
+  }
+
+  .flow-nav__sheet a {
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 1rem;
+  }
+
+  .flow-nav__sheet a:hover {
+    background: rgba(238, 242, 244, 0.06);
+  }
+
+  .flow-hero__scrim {
+    background: linear-gradient(180deg, rgba(5, 6, 8, 0.55) 0%, rgba(5, 6, 8, 0.35) 40%, rgba(5, 6, 8, 0.75) 100%);
+  }
+
+  .flow-hero__content {
+    align-self: end;
+  }
+}
+
+@media (max-width: 480px) {
+  .flow-nav .flow-button--small {
+    display: none;
+  }
+
+  .flow-hero__ctas .flow-button {
+    flex: 1 1 100%;
+  }
+}
