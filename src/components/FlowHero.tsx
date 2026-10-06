@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, type PointerEvent } from "react";
 
 import { StructureFlowCollection } from "../shaders/structure-flow/StructureFlowCollection";
 import "./FlowHero.css";
 
-const NAV_LINKS = ["Product", "Integrations", "Pricing", "Customers"];
 const SIGNATURE_WORD = "flow";
 
 /* "flow" swells under the pointer like a lens of the glass behind it: each
@@ -55,24 +54,7 @@ function FlowWord() {
   );
 }
 
-function FlowMark() {
-  return (
-    <svg className="flow-mark" viewBox="0 0 32 32" aria-hidden="true">
-      <circle cx="16" cy="16" r="15" fill="none" stroke="currentColor" strokeOpacity="0.35" />
-      <path d="M5 18c4-6 8-6 11 0s7 6 11 0" fill="none" stroke="url(#flow-mark-tide)" strokeWidth="2.4" strokeLinecap="round" />
-      <defs>
-        <linearGradient id="flow-mark-tide" x1="5" x2="27" y1="0" y2="0" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#19d9bf" />
-          <stop offset="1" stopColor="#7a3cff" />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
 export function FlowHero() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
   return (
     <section className="flow-hero" aria-labelledby="flow-hero-title">
       {/* decorative background: the pointer still reaches it, so the camera keeps its authored parallax */}
@@ -80,35 +62,6 @@ export function FlowHero() {
         <StructureFlowCollection variant="dimensional-field" hue={0} saturation={1.00} brightness={1.00} />
       </div>
       <div className="flow-hero__scrim" aria-hidden="true" />
-
-      <header className="flow-nav">
-        <a className="flow-nav__brand" href="/" aria-label="Flow home">
-          <FlowMark />
-          <span>Flow</span>
-        </a>
-        <nav className="flow-nav__links" aria-label="Primary">
-          {NAV_LINKS.map((link) => <a key={link} href={`#${link.toLowerCase()}`}>{link}</a>)}
-        </nav>
-        <div className="flow-nav__actions">
-          <a className="flow-nav__signin" href="#sign-in">Sign in</a>
-          <a className="flow-button flow-button--small" href="#start">Start free</a>
-          <button
-            className="flow-nav__menu"
-            type="button"
-            aria-expanded={menuOpen}
-            aria-controls="flow-mobile-menu"
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            {menuOpen ? "Close" : "Menu"}
-          </button>
-        </div>
-        <nav id="flow-mobile-menu" className="flow-nav__sheet" data-open={menuOpen} aria-label="Primary mobile">
-          {NAV_LINKS.map((link) => (
-            <a key={link} href={`#${link.toLowerCase()}`} onClick={() => setMenuOpen(false)}>{link}</a>
-          ))}
-          <a href="#sign-in" onClick={() => setMenuOpen(false)}>Sign in</a>
-        </nav>
-      </header>
 
       <div className="flow-hero__content">
         <h1 id="flow-hero-title" className="flow-hero__title">

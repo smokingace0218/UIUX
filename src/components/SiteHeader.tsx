@@ -1,0 +1,52 @@
+import { useEffect, useState } from "react";
+
+import { FlowMark } from "./FlowMark";
+
+export const NAV_LINKS = [
+  { label: "How it works", href: "#how-it-works" },
+  { label: "Integrations", href: "#integrations" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "FAQ", href: "#faq" },
+];
+
+export function SiteHeader() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const close = (event: KeyboardEvent) => { if (event.key === "Escape") setMenuOpen(false); };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [menuOpen]);
+
+  return (
+    <header className="flow-nav">
+      <a className="flow-nav__brand" href="/" aria-label="Flow home">
+        <FlowMark />
+        <span>Flow</span>
+      </a>
+      <nav className="flow-nav__links" aria-label="Primary">
+        {NAV_LINKS.map((link) => <a key={link.href} href={link.href}>{link.label}</a>)}
+      </nav>
+      <div className="flow-nav__actions">
+        <a className="flow-nav__signin" href="#sign-in">Sign in</a>
+        <a className="flow-button flow-button--small" href="#start">Start free</a>
+        <button
+          className="flow-nav__menu"
+          type="button"
+          aria-expanded={menuOpen}
+          aria-controls="flow-mobile-menu"
+          onClick={() => setMenuOpen((open) => !open)}
+        >
+          {menuOpen ? "Close" : "Menu"}
+        </button>
+      </div>
+      <nav id="flow-mobile-menu" className="flow-nav__sheet" data-open={menuOpen} aria-label="Primary mobile">
+        {NAV_LINKS.map((link) => (
+          <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>{link.label}</a>
+        ))}
+        <a href="#sign-in" onClick={() => setMenuOpen(false)}>Sign in</a>
+        <a className="flow-button" href="#start" onClick={() => setMenuOpen(false)}>Start free</a>
+      </nav>
+    </header>
+  );
+}

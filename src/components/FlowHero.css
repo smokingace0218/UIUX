@@ -2,8 +2,9 @@
   position: relative;
   isolation: isolate;
   display: grid;
-  grid-template-rows: auto 1fr auto;
+  grid-template-rows: 1fr auto;
   min-height: max(100dvh, 640px);
+  padding-top: 84px;
   overflow: hidden;
   background: var(--void);
   /* the layer above the shader lets the pointer through to it; only things
@@ -12,7 +13,6 @@
 }
 
 .flow-hero a,
-.flow-hero button,
 .flow-word {
   pointer-events: auto;
 }
@@ -37,14 +37,18 @@
 
 /* ── navigation ────────────────────────────────────────────── */
 
+/* sits over the top of the hero */
 .flow-nav {
-  position: relative;
-  z-index: 10;
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 50;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 22px clamp(16px, 4vw, 56px);
+  padding: 18px clamp(16px, 4vw, 56px);
 }
 
 .flow-nav a:not(.flow-button),
@@ -167,8 +171,9 @@
   box-shadow: none;
 }
 
-.flow-hero a:focus-visible,
-.flow-hero button:focus-visible {
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
   outline: 2px solid var(--tide);
   outline-offset: 3px;
 }
@@ -184,7 +189,7 @@
 .flow-hero__title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(3.4rem, 10.5vw, 9.5rem);
+  font-size: clamp(3.4rem, 10.5vw, 13rem);
   font-weight: 300;
   font-variation-settings: "wdth" 72, "wght" 300;
   line-height: 0.92;
@@ -260,7 +265,6 @@
 /* ── load sequence ─────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: no-preference) {
-  .flow-nav,
   .flow-hero__line,
   .flow-hero__lede,
   .flow-hero__ctas,
@@ -301,7 +305,6 @@
     top: 100%;
     right: 16px;
     left: 16px;
-    z-index: 5;
     display: grid;
     gap: 2px;
     padding: 8px;
@@ -313,13 +316,17 @@
     pointer-events: auto;
   }
 
-  .flow-nav__sheet a {
+  .flow-nav__sheet a:not(.flow-button) {
     padding: 14px 16px;
     border-radius: 12px;
     font-size: 1rem;
   }
 
-  .flow-nav__sheet a:hover {
+  .flow-nav__sheet .flow-button {
+    margin-top: 8px;
+  }
+
+  .flow-nav__sheet a:not(.flow-button):hover {
     background: rgba(238, 242, 244, 0.06);
   }
 
@@ -339,5 +346,96 @@
 
   .flow-hero__ctas .flow-button {
     flex: 1 1 100%;
+  }
+}
+
+/* ── very wide screens: the copy grows with the canvas ─────── */
+
+@media (min-width: 1800px) {
+  .flow-nav__brand {
+    font-size: 1.6rem;
+  }
+
+  .flow-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .flow-nav__links a,
+  .flow-nav__signin {
+    font-size: 1rem;
+  }
+
+  .flow-nav .flow-button--small {
+    min-height: 46px;
+    padding: 0 24px;
+    font-size: 1rem;
+  }
+
+  .flow-hero__content {
+    max-width: 1280px;
+  }
+
+  .flow-hero__lede {
+    font-size: 1.35rem;
+  }
+
+  .flow-hero__ctas .flow-button {
+    min-height: 56px;
+    padding: 0 32px;
+    font-size: 1.05rem;
+  }
+
+  .flow-hero__note,
+  .flow-hero__connects {
+    font-size: 0.85rem;
+  }
+}
+
+/* ── short screens (phones held sideways): size by height ──── */
+
+@media (max-height: 560px) and (orientation: landscape) {
+  .flow-hero {
+    min-height: 100dvh;
+    padding-top: 72px;
+  }
+
+  .flow-nav {
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .flow-hero__content {
+    align-self: center;
+    padding-top: 8px;
+    padding-bottom: 24px;
+  }
+
+  .flow-hero__title {
+    font-size: clamp(2.4rem, 17vh, 6rem);
+  }
+
+  .flow-hero__lede {
+    max-width: 52ch;
+    margin-top: 14px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .flow-hero__ctas {
+    margin-top: 18px;
+  }
+
+  .flow-hero__ctas .flow-button {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+
+  .flow-hero__note {
+    margin-top: 10px;
+  }
+
+  .flow-hero__connects {
+    display: none;
   }
 }
