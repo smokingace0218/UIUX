@@ -48,7 +48,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 18px clamp(16px, 4vw, 56px);
+  padding: calc(18px + env(safe-area-inset-top, 0px)) clamp(16px, 4vw, 56px) 18px;
 }
 
 .flow-nav a:not(.flow-button),
