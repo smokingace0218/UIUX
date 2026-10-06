@@ -143,8 +143,52 @@
 
 .flow-button:hover {
   background: #ffffff;
-  box-shadow: 0 0 0 6px rgba(25, 217, 191, 0.12);
   transform: translateY(-1px);
+}
+
+/* on hover, a hairline of the Flow gradient (teal, sky, violet) draws around
+   the primary button, a few pixels out, with the faintest matching halo.
+   It stays thin and low so the button keeps its weight. */
+.flow-button:not(.flow-button--glass) {
+  position: relative;
+  isolation: isolate;
+}
+
+.flow-button:not(.flow-button--glass)::before,
+.flow-button:not(.flow-button--glass)::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(100deg, #19d9bf, #6fb7ff 50%, #7a3cff);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 320ms ease;
+}
+
+/* the ring: the gradient masked down to a 1.5px band */
+.flow-button:not(.flow-button--glass)::before {
+  padding: 1.5px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+/* the halo: the same gradient, blurred well out and kept faint */
+.flow-button:not(.flow-button--glass)::after {
+  inset: -2px;
+  filter: blur(14px);
+}
+
+.flow-button:not(.flow-button--glass):hover::before,
+.flow-button:not(.flow-button--glass):focus-visible::before {
+  opacity: 0.9;
+}
+
+.flow-button:not(.flow-button--glass):hover::after,
+.flow-button:not(.flow-button--glass):focus-visible::after {
+  opacity: 0.22;
 }
 
 .flow-button--small {
