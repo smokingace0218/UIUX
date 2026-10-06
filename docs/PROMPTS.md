@@ -1,145 +1,118 @@
-# Flow hero: an intentional prompt plan
+# Flow hero: reaching the final preview with the fewest tokens
 
-This is how I'll direct Claude Code to build the final Flow hero in one lean session. Every prompt has a stated purpose, exact decisions and a check. Nothing is left for Claude to guess, so no tokens go on exploring, back-and-forth or rework.
+## 1. Where tokens go, and the decision for each
 
----
+In a Claude Code session, cost comes from five things. The plan answers each one.
 
-## 1. Project goals (decided before any prompt)
+| Cost driver | Why it's expensive | Decision |
+|---|---|---|
+| **Conversation length** | Every new message re-sends the whole conversation so far, so each extra turn costs more than the last. | **4 prompts in total.** Each one is a complete, self-contained chunk of work. No small talk, no "looks good, next". |
+| **Discovery and iteration** | Unclear asks lead to options, questions and redoing work. Today this was most of the cost. | Every decision is fixed in advance: exact copy, fonts, colours, timings and behaviour. Claude builds each part once. |
+| **Rebuilding what already exists** | Writing the shader background again from a description is the largest single piece of work. | **Bring it as files.** The background is the ThreeUI source I found plus my own adaptation of it from an earlier session. Upload both; don't rebuild them. |
+| **Tool output** | Build logs, screenshots and whole-file reads all land in the conversation and are re-sent with every later message. | Quiet builds (last lines only), **no screenshots**, one headless check at the end, and read only the files being changed. |
+| **Model** | The most capable model costs the most per token. | This is a specification-following build with no open design questions, so a mid-tier model such as Sonnet can carry it. Switch up only if a step fails twice. |
 
-**What I'm designing:** the first screen of a landing page for Flow, a fictional productivity app.
-
-**The one idea:** the page should *act out* its tagline, "Everything you need to get your work done, without the noise." It opens busy and fragmented. As the visitor engages, it settles into calm, coordinated movement; the message comes clear and Get Started becomes the obvious next step. Noise → Flow.
-
-**Design goals**
-1. **Identity:** "Flow" should look like it flows. A joined brush script, with colour and a water drop that travel through the letters the way the word is written.
-2. **Atmosphere:** a living, liquid world of glass bubbles over moving light that responds to the visitor without becoming a toy.
-3. **Clarity:** the exact brief copy and a single primary action, Get Started, which becomes the strongest element once the page has settled.
-4. **Restraint:** motion that glides rather than bounces, and no invented product features, dashboards or icons. Flow stays undefined.
-
-**Constraints**
-- Hero only, desktop-first, still usable on a phone.
-- Exact brief copy and the Get Started CTA.
-- The background is the ThreeUI *Dimensional Field* source, used unmodified and adapted only at load time.
-- It must open and replay reliably as a published preview.
-- Accessible: readable without a mouse; reduced motion and keyboard focus skip straight to the settled state.
-
-**Done means:** the preview loads and reloads cleanly; the noise → Flow story reads without explanation; the copy is sharp at the end; `docs/PROCESS.md` records how I directed the AI.
-
-**How I work with Claude (the token budget)**
-- The goals live in `CLAUDE.md`, so I never re-explain the project.
-- One purpose per prompt. Exact values instead of adjectives.
-- Claude verifies with a build and one headless check. No screenshots unless I ask.
-- Corrections name the element and the fix.
+**Target:** 4 prompts and 1 end-to-end check, giving a published preview plus `PROCESS.md`. Corrections only if something is actually wrong, one line each.
 
 ---
 
-## 2. Before the session
+## 2. Set up before the session (no tokens)
 
-1. Create `CLAUDE.md` at the repo root with the text below. Claude Code reads it automatically every session.
-2. Add the background to the repo (upload; don't paste it into the chat):
-   - `source/vanguard-dimensional.html`: the ThreeUI *Dimensional Field* source, unmodified.
-   - `source/LiquidDimensionalField.tsx`: my adaptation of it from an earlier exploration session (liquid glass bubbles, cursor response, free drift, the noise → Flow hooks).
+All of this is done on GitHub, before Claude is involved:
 
-   That's all the background needs. The other ThreeUI files belong to the wider effect collection, and the page doesn't use them.
+1. **Create the repo:** a new repo, for example `flow-hero`, with a README.
+2. **Upload the background** into a `source/` folder:
+   - `source/vanguard-dimensional.html`: the ThreeUI *Dimensional Field*, as sourced. (From the UIUX repo: `src/shaders/neuform-isolated/sources/vanguard-dimensional.html`.)
+   - `source/LiquidDimensionalField.tsx`: my adaptation. (From the UIUX repo: `src/components/LiquidDimensionalField.tsx`.)
+3. **Add `CLAUDE.md`** at the root with the text below. Claude reads it automatically, so the brief never has to be repeated in a prompt.
 
 ```markdown
 # Flow hero
 
 Landing-page hero for "Flow", a fictional productivity app. The page acts out
-its tagline: it opens busy (noise) and settles as the visitor engages (Flow),
+its tagline: it opens busy (noise) and settles as the visitor moves (Flow),
 ending with the copy sharp and Get Started as the clear action.
 
-## Fixed
+## Fixed decisions
 - Copy, exact: "Everything you need to get your work done, without the noise."
-- Primary CTA: Get Started. Secondary: See how it works.
-- Hero only. No dashboards, feature cards, icons or invented features.
-- Fonts: Mr Dafoe (logo, "Flow"), Geist (everything else).
-- Palette: #19d9bf → #6fb7ff → #7a3cff on near-black #050608.
+- CTAs: Get Started (primary, white), See how it works (glass). Nothing below them.
+- Hero only. No dashboards, cards, icons or invented features.
+- Fonts (Google): Mr Dafoe for the logo and "Flow"; Geist for everything else.
+- Palette: #19d9bf → #6fb7ff → #7a3cff on #050608.
 - Motion glides, never bounces. Respect prefers-reduced-motion.
-- Background: sourced from ThreeUI (Dimensional Field) and adapted by me in an
-  earlier session. Both are in source/: the original stays unmodified; my
-  adaptation transforms it at load. Use them as given.
+- Background: sourced from ThreeUI (Dimensional Field), adapted by me earlier.
+  Both files are in source/. Use them as given; don't modify them.
 
-## How to work
-- Build only what the prompt asks; don't explore alternatives or ask questions.
-- Stack: Vite + React + TypeScript, `base: './'`, one JS and one CSS bundle.
-- Verify with `npm run build` and one headless check (loads, console clean).
-  No screenshots unless asked.
-- Reply in a few lines: what changed and the check result. Commit each step.
+## How to work (token budget)
+- Build exactly what the prompt specifies. Don't offer options or ask questions.
+- Vite + React + TypeScript, `base: './'`, one JS + one CSS bundle.
+- Run builds quietly (`npm run build 2>&1 | tail -3`). No screenshots.
+- Read only the files you are changing. Don't re-read files you just wrote.
+- Reply in at most 3 lines: what was built and the result. Commit each prompt.
 ```
 
 ---
 
-## 3. The prompts
+## 3. The four prompts
 
-Send them one at a time and wait for each to finish.
+Copy each quoted block as one message. Wait for the reply, then send the next.
 
-### Prompt 1: the stage and the world
-**Purpose:** a reliable base, plus the atmosphere goal: a living world of glass bubbles before anyone interacts. The background was sourced from ThreeUI and adapted by me earlier, so this step places it rather than reinventing it.
+### Prompt 1: stage, world and brand
+**Purpose:** in one step, the living background (atmosphere) and a logo that acts out its name (identity).
 
-> Set up the project per CLAUDE.md. The background is in `source/`: the ThreeUI Dimensional Field original, which I sourced, and my adaptation, `LiquidDimensionalField.tsx`. Move both into `src/` and use them as given: render it full-bleed behind a hero section, with its wrapper at `pointer-events: auto`. Add an empty header and hero content area. Don't change the background code.
+> Set up the project per CLAUDE.md. Move the files in `source/` into `src/` and render `LiquidDimensionalField` full-bleed behind a hero section, with its wrapper at `pointer-events: auto`.
+>
+> **Header:** the logo on the left; a centre pill nav (Features, Pricing, Download); Sign in and a white Get Started on the right; a mobile menu sheet.
+>
+> **Logo:** "Flow" in Mr Dafoe, white at rest.
+> - On hover, a drop glides F→w, 1.5 s per pass, looping while hovered. It's a drop and a lagging droplet fused by a goo filter (blur 1.6, alpha matrix `0 0 0 20 -8`), riding at letter heights 0.2, 0.12, 0.46, 0.46.
+> - Each letter fills as the drop reaches it and stays filled while hovered: F `#28d3ca`, l `#59c0ee`, o `#7297ff`, w `#7851ff`, with a faint glow under the drop. On leave it drains back to white.
+> - Clicking the logo calls `location.reload()` (prevent the default; don't link to `/`).
 
-### Prompt 2: (only if not bringing the adaptation) the world becomes liquid glass
-**Purpose:** the atmosphere goal. Skip this prompt if `LiquidDimensionalField.tsx` was provided in prompt 1; it already does all of this.
-
-> In the background transforms:
-> - **Glass:** each sphere is clear. It shows the background field bent through it (bend 0.05 + 0.12·fresnel), with a thin-film rainbow rim (0.38·fresnel), a small highlight (pow 220) and no tint in the centre.
-> - **Liquid:** a gentle vertex wobble (0.045). Near a moving cursor, swell the surface by distance only (`u_pull·exp(−d²·0.06)·0.55`), so it never forms points. The bubble eases away from the cursor (about 0.7 s spring), grows 7%, and floats back when the cursor rests.
-> - **Always alive:** keep a floor on the light beams (`0.3 + 0.7·smoothstep(−0.45, 0.9, …)`). The large, bottom-left and small bubbles also wander slowly in bounded areas (reach about 0.9/1.1/1.9 in x, 0.6/0.8/1.4 in y), on unrelated frequencies.
-> - Use time-based easing and clamp dt to 0–0.25 s.
-
-### Prompt 3: a logo that acts out its name
-**Purpose:** the identity goal in miniature. The brand flows when touched and rests quietly otherwise.
-
-> Header: the "Flow" logo on the left in Mr Dafoe, white at rest; a centre pill nav (Features, Pricing, Download); Sign in and a white Get Started on the right; a mobile menu sheet.
-> - **On hover:** a drop glides through the logo F→w (1.5 s per pass, looping while hovered). It's a drop plus a lagging droplet fused by a goo filter, riding at each letter's height (0.2, 0.12, 0.46, 0.46 of the letter box).
-> - **Colour:** each letter fills as the drop reaches it and stays filled while hovered: F `#28d3ca`, l `#59c0ee`, o `#7297ff`, w `#7851ff`. The letter under the drop glows faintly. On leave it drains back to white.
-> - **Click:** reloads the page (`preventDefault`, then `location.reload()`). Don't use `href="/"`.
-
-### Prompt 4: the headline that flows
-**Purpose:** the identity goal at full scale. The headline should express "flow" in its writing direction and stay perfectly legible.
+### Prompt 2: the headline, message and action
+**Purpose:** identity at full scale, plus clarity: one message and one primary action.
 
 > Hero content, left-aligned:
 > - "LET YOUR WORK" in tracked uppercase Geist.
-> - Below it, "Flow" in Mr Dafoe at `clamp(7.5rem, 16.5vw, 19rem)`, as **one SVG** `<text><textPath>` so the joins never break. Fill it with the palette gradient. Fit the viewBox to the ink using canvas `measureText`.
-> - **Pour:** a bright liquid copy (white → `#63f2dc`) is clipped to a slanted, wavy stream that runs F→w in 2.4 s. It plays 1.3 s after load, then every 3.2–5.2 s, and loops on hover. The baseline rolls as a gentle wave during a pour.
-> - **Drop:** the logo's drop (same goo) rides just behind the front of the pour.
+> - "Flow" in Mr Dafoe at `clamp(7.5rem, 16.5vw, 19rem)`, as one SVG `<text><textPath>` on a baseline path so the joins never break, filled with the palette gradient. Fit the viewBox to the ink with canvas `measureText`.
+> - **Pour:** a bright copy (white → `#63f2dc`) clipped to a slanted, wavy stream runs F→w in 2.4 s. It plays 1.3 s after load, then every 3.2–5.2 s, and loops on hover. During a pour the baseline rolls as a gentle sine wave. The logo's drop (same goo, `#5ff5df → #6fb7ff`) rides just behind the front of the stream.
+> - The exact copy in Geist 300, max width 34ch. Then the two CTAs.
+> - On hover and focus, Get Started gains a 1.5 px gradient ring 4 px outside it, plus a halo (blur 14 px, opacity 0.22).
 
-### Prompt 5: the message and the action
-**Purpose:** the clarity goal. One message, one primary action, and a hover state that invites without shouting.
+### Prompt 3: noise → Flow, then prove it and publish
+**Purpose:** the core idea. The visitor's movement turns noise into flow. Then check the "done" criteria in one pass.
 
-> Under the headline: the exact copy in Geist 300 (max width 34ch); then **Get Started** (white) and **See how it works** (glass). Nothing below the buttons. On hover and focus, Get Started gains a 1.5 px gradient ring 4 px outside it, plus a faint blurred halo (opacity 0.22). No inner stroke.
+> Add an `order` value from 0 to 1. Send it to the background as `postMessage({flowOrder})`; `LiquidDimensionalField` already listens for it and sends `flowPointer` and `flowHello`.
+> - It rises over 2.4 s of pointer movement (from the page, or from `flowPointer` messages), sinks over 7 s when movement stops, and locks at 1. Ease it in and out.
+> - Set `--order` and `data-state` (noise / settling / flow) on the hero.
+> - **Copy:** an SVG filter (turbulence + displacement up to 16 + blur up to 1.4) scaled by (1 − order), removed entirely at 1. Copy opacity 0.42 → 1.
+> - **At 1:** Get Started scales to 1.06 with a teal/violet glow; See how it works fades to 0.62.
+> - Focus on a CTA, reduced motion, or touch (after 1.8 s) settles straight to 1.
+>
+> Then run **one** headless check on the built bundle: first load, two reloads and a logo click each draw the canvas with a clean console, and the copy filter is gone after pointer movement. Publish the built page as an artifact and give me the link.
 
-### Prompt 6: noise → Flow
-**Purpose:** the core idea. The visitor's own movement turns noise into flow, so the page *shows* the tagline instead of just saying it.
+### Prompt 4: the record
+**Purpose:** the assignment's workflow and reflection deliverables.
 
-> Add an `order` value from 0 to 1 that the page shares with the background over `postMessage`. The iframe says hello on load and forwards pointer moves.
-> - It rises over 2.4 s of pointer movement, sinks over 7 s when movement stops, and locks at 1. Ease it in and out.
-> - **At 0:** the field is busy, the bubbles bob independently, and the body copy is bent and softened by an SVG filter (displacement up to 16, blur up to 1.4).
-> - **Rising:** the bubbles join one slow shared current; turbulence 0.4 → 0.22; the scene clock slows by up to 45%; refraction −35%; the copy filter fades and is removed at 1.
-> - **At 1:** Get Started scales to 1.06 with a teal/violet glow, and the secondary button fades to 0.62.
-> - Focus on a button, reduced motion, or touch (after 1.8 s) settles straight to 1.
-
-### Prompt 7: prove it and publish
-**Purpose:** the "done" criteria. Reliable, not just pretty.
-
-> Run one headless check on the built bundle: first load, two reloads and a logo click each show the canvas drawing with a clean console, and the copy is unfiltered after pointer movement. Then publish the page as an artifact and give me the link.
-
-### Prompt 8: tell the story
-**Purpose:** the assignment's AI workflow and reflection deliverables.
-
-> Write `docs/PROCESS.md` (under 120 lines):
-> - the goals from CLAUDE.md;
-> - the steps above, one short paragraph each, with the intent of each;
-> - a table of where I directed or corrected the AI, including the decisions I carried over from my first exploratory session;
+> Write `docs/PROCESS.md` in under 100 lines:
+> - the goal and the noise → Flow idea;
+> - the background's origin (sourced from ThreeUI, adapted by me earlier);
+> - what each of the 4 prompts did and why;
+> - why the session was planned for low token use;
+> - a short table of decisions I made;
 > - a 3–5 sentence reflection draft marked for me to rewrite.
 
 ---
 
-## 4. If something needs correcting
+## 4. Corrections, if needed
 
-Use one line, naming the element, the change and the reason. For example:
+One line per correction, naming the element, the change and the reason. Send several in one message if needed; that's still one turn.
 
-> The drop on "Flow" sits too low on the o and w: raise those landing heights to 0.4, so it rides the bowls rather than the baseline.
+> Halo on Get Started too strong: opacity 0.15. Drop on the o and w sits low: landing 0.40.
 
-This keeps each correction to one cheap, deliberate turn.
+## 5. After the session (no tokens)
+
+1. Open the preview link while signed in. Check that it plays, that moving the mouse settles the page, that hovering the logo and "Flow" works, and that clicking the logo reloads.
+2. On the preview page, click **Share → Anyone with the link**.
+3. Rewrite the reflection in `docs/PROCESS.md` in your own words.
+4. Submit the preview link, the repo, `docs/PROCESS.md` and the session.
