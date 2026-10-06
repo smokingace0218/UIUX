@@ -69,19 +69,15 @@ export function FlowHero() {
           <span className="flow-hero__line">work <FlowWord />.</span>
         </h1>
         <p className="flow-hero__lede">
-          Flow connects the tools your team already uses and moves every request to its next step.
-          Approvals, updates and follow-ups happen without anyone chasing them.
+          Everything you need to get your work done, without the noise.
         </p>
         <div className="flow-hero__ctas">
-          <a className="flow-button" href="#start">Start free</a>
-          <a className="flow-button flow-button--glass" href="#how-it-works">See how it works</a>
+          <a className="flow-button" href="#get-started">Get Started</a>
+          <a className="flow-button flow-button--glass" href="#features">See how it works</a>
         </div>
-        <p className="flow-hero__note">Free for 14 days. No card needed.</p>
+        <p className="flow-hero__note">Free for personal use. No card needed.</p>
       </div>
 
-      <p className="flow-hero__connects">
-        Works with Slack, Gmail, Salesforce, Notion, Linear and 240 more apps
-      </p>
     </section>
   );
 }

@@ -3,10 +3,9 @@ import { useEffect, useState } from "react";
 import { FlowMark } from "./FlowMark";
 
 export const NAV_LINKS = [
-  { label: "How it works", href: "#how-it-works" },
-  { label: "Integrations", href: "#integrations" },
+  { label: "Features", href: "#features" },
   { label: "Pricing", href: "#pricing" },
-  { label: "FAQ", href: "#faq" },
+  { label: "Download", href: "#download" },
 ];
 
 export function SiteHeader() {
@@ -29,7 +28,7 @@ export function SiteHeader() {
       </nav>
       <div className="flow-nav__actions">
         <a className="flow-nav__signin" href="#sign-in">Sign in</a>
-        <a className="flow-button flow-button--small" href="#start">Start free</a>
+        <a className="flow-button flow-button--small" href="#get-started">Get Started</a>
         <button
           className="flow-nav__menu"
           type="button"
@@ -45,7 +44,7 @@ export function SiteHeader() {
           <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>{link.label}</a>
         ))}
         <a href="#sign-in" onClick={() => setMenuOpen(false)}>Sign in</a>
-        <a className="flow-button" href="#start" onClick={() => setMenuOpen(false)}>Start free</a>
+        <a className="flow-button" href="#get-started" onClick={() => setMenuOpen(false)}>Get Started</a>
       </nav>
     </header>
   );
