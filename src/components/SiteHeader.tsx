@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { FlowMark } from "./FlowMark";
+import { FlowLogo } from "./FlowLogo";
 
 export const NAV_LINKS = [
   { label: "Features", href: "#features" },
@@ -20,8 +20,7 @@ export function SiteHeader() {
   return (
     <header className="flow-nav">
       <a className="flow-nav__brand" href="/" aria-label="Flow home">
-        <FlowMark />
-        <span>Flow</span>
+        <FlowLogo />
       </a>
       <nav className="flow-nav__links" aria-label="Primary">
         {NAV_LINKS.map((link) => <a key={link.href} href={link.href}>{link.label}</a>)}

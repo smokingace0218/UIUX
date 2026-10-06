@@ -63,7 +63,6 @@
 .flow-nav__brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
   font-family: var(--font-display);
   font-size: 1.3rem;
   font-variation-settings: "wdth" 125, "wght" 700;
@@ -429,4 +428,26 @@ summary:focus-visible {
   .flow-hero__note {
     margin-top: 10px;
   }
+}
+
+/* ── logo: a current runs through it on hover (driven by FlowLogo) ── */
+
+.flow-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.flow-logo__word {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.flow-logo__word [data-letter] {
+  --swell: 0;
+  display: inline-block;
+  color: color-mix(in srgb, var(--tide) calc(var(--swell) * 85%), var(--ink));
+  font-variation-settings: "wdth" calc(125 + var(--swell) * 25), "wght" calc(700 + var(--swell) * 200);
+  transform: translateY(calc(var(--swell) * -0.12em));
+  will-change: transform;
 }

@@ -74,6 +74,23 @@ When I gave Claude the full brief, it compared the build against each requiremen
 
 Design call: "without the noise" argues for fewer elements, so we removed the "Works with Slack, Gmail…" line and cut the nav from four links to three. The tagline became the only supporting line, set larger.
 
+### 6. Borrowing an idea from Butter: a logo that acts out its name
+
+I studied [Butter](https://www.butter.video/): its interface type is plain and quiet, and the wordmark is the one expressive element. On hover the Butter logo melts, so the logo itself shows what the brand is about. I asked for the same idea applied to Flow.
+
+The result: hovering the logo sends a current through it.
+
+- The wave inside the mark starts to move, and a swell travels through F-l-o-w, widening, lifting and tinting each letter as it passes.
+- When the pointer leaves, the current runs down smoothly instead of stopping dead.
+- It also plays on keyboard focus, and it's off for reduced motion.
+
+Two bugs were caught by testing before this shipped:
+
+- **Colour drift:** the wave carried its gradient with it as it moved, so the mark turned all violet. The fix was to make the wave a mask over a fixed gradient: the line moves and its colours stay put.
+- **Slow settle:** the run-down was counted in frames rather than seconds, so on a slow machine (the test machine drew only 5 frames per second) it took much longer than intended. The easing is now timed in seconds.
+
+![Logo on hover, frame by frame](process/09-logo-current-on-hover.png)
+
 ## Where I directed or corrected the AI
 
 | AI output | My direction |
@@ -82,6 +99,7 @@ Design call: "without the noise" argues for fewer elements, so we removed the "W
 | Expanded "responsive webpage" into a six-section landing page | Cut it to the hero only, matching the brief |
 | Its test said the hover worked | Noticed it didn't in the live preview; the root cause was a CSS inheritance bug |
 | Invented an automation product and its copy | Brought the copy back to the brief's productivity app, tagline and CTA |
+| A static logo | Pointed to Butter's melting wordmark as the reference for a logo that shows the brand's idea |
 
 ## Reflection
 
