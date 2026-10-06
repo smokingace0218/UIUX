@@ -91,6 +91,19 @@ Testing caught a real bug along the way. The browser's first frame can carry a t
 
 ![Logo on hover, frame by frame](process/09-logo-drop-on-hover.png)
 
+### 7. The headline word: liquid poured letter to letter
+
+The hero's "flow" word only swelled under the cursor. I asked for the expansion and highlight to pass between the letters in a way that reflects the name. The result treats each letter as a vessel:
+
+- A bright liquid with a sloshing, wavy surface rises inside the **f**, and the letter widens and gets bolder as it fills.
+- As the f drains, the **l** fills, then the **o**, then the **w**. The highlight is poured along the word like water from glass to glass.
+- It plays once after the headline arrives, then every few seconds, and continuously while the word is hovered. It's off for reduced motion.
+- Underneath the liquid, each letter shows its own slice of one gradient sized to the whole word, so the word still reads as a single cyan-to-violet sweep.
+
+The first test render caught a positioning bug. The letters after "l" disappeared when empty, because each letter's position was measured from the whole hero section instead of the word, so their slices of the gradient fell off its end.
+
+![Headline pour, frame by frame](process/10-headline-pour.png)
+
 ## Where I directed or corrected the AI
 
 | AI output | My direction |
@@ -99,6 +112,7 @@ Testing caught a real bug along the way. The browser's first frame can carry a t
 | Expanded "responsive webpage" into a six-section landing page | Cut it to the hero only, matching the brief |
 | Its test said the hover worked | Noticed it didn't in the live preview; the root cause was a CSS inheritance bug |
 | Invented an automation product and its copy | Brought the copy back to the brief's productivity app, tagline and CTA |
+| A headline word that only reacted to the cursor | Asked for the highlight to pass between the letters in a way that reflects the name |
 | A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection

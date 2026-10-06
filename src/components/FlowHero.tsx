@@ -1,16 +1,34 @@
-import { useEffect, useRef, type PointerEvent } from "react";
+import { useEffect, useRef } from "react";
 
 import { StructureFlowCollection } from "../shaders/structure-flow/StructureFlowCollection";
 import "./FlowHero.css";
 
 const SIGNATURE_WORD = "flow";
 
-/* "flow" swells under the pointer like a lens of the glass behind it: each
-   letter's width and weight follow its distance from the cursor, eased per
-   frame so the swell drifts rather than snaps. */
+/* The headline word is poured, letter by letter. Each letter is a vessel: a
+   bright liquid with a sloshing surface rises inside it, and the letter
+   swells wider and bolder as it fills. As one drains the next fills, so the
+   highlight is handed along the word like water poured from glass to glass.
+   It runs once after the headline arrives, then every few seconds, and
+   continuously while the word is hovered. */
+const POUR = {
+  stagger: 0.42, // seconds between one letter starting to fill and the next
+  rise: 0.55,
+  hold: 0.2,
+  drain: 0.7,
+  restMin: 3.2, // quiet time between ambient pours
+  restMax: 5.2,
+  firstDelay: 1.3, // lets the headline finish arriving first
+};
+
+function smooth(x: number) {
+  const t = Math.min(1, Math.max(0, x));
+  return t * t * (3 - 2 * t);
+}
+
 function FlowWord() {
   const wordRef = useRef<HTMLSpanElement>(null);
-  const target = useRef<number | null>(null);
+  const hovered = useRef(false);
 
   useEffect(() => {
     const word = wordRef.current;
@@ -18,34 +36,60 @@ function FlowWord() {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return undefined;
 
     const letters = Array.from(word.querySelectorAll<HTMLSpanElement>("[data-letter]"));
-    const swell = letters.map(() => 0);
+    const runLength = POUR.stagger * (letters.length - 1) + POUR.rise + POUR.hold + POUR.drain;
+    let runTime = -1; // seconds into the current pour, or -1 when resting
+    let nextRun = POUR.firstDelay;
+    let clock = 0;
     let frame = 0;
+    let last = performance.now();
 
-    const tick = () => {
-      const pointer = target.current;
-      letters.forEach((letter, index) => {
-        let goal = 0;
-        if (pointer !== null) {
-          const box = letter.getBoundingClientRect();
-          const distance = Math.abs(pointer - (box.left + box.width / 2)) / box.height;
-          goal = Math.exp(-distance * distance * 2.2);
+    const tick = (now: number) => {
+      // never let time run backwards; capped so a returning tab does not jump
+      const dt = Math.max(0, Math.min(0.25, (now - last) / 1000));
+      last = now;
+      clock += dt;
+
+      if (runTime < 0 && (clock >= nextRun || hovered.current)) runTime = 0;
+      if (runTime >= 0) {
+        runTime += dt;
+        if (runTime > runLength) {
+          // hovering keeps the liquid moving: the next pour starts as this one ends
+          runTime = hovered.current ? runTime - runLength + POUR.stagger : -1;
+          nextRun = clock + POUR.restMin + Math.random() * (POUR.restMax - POUR.restMin);
         }
-        swell[index] += (goal - swell[index]) * 0.12;
-        letter.style.setProperty("--swell", swell[index].toFixed(3));
+      }
+
+      // the base gradient spans the whole word, so each letter shows its own slice of it
+      const width = word.offsetWidth;
+      letters.forEach((letter, index) => {
+        let fill = 0;
+        if (runTime >= 0) {
+          const local = runTime - index * POUR.stagger;
+          fill = smooth(local / POUR.rise) * (1 - smooth((local - POUR.rise - POUR.hold) / POUR.drain));
+        }
+        letter.style.setProperty("--fill", fill.toFixed(3));
+        letter.style.setProperty("--slosh", (clock * 34 + index * 17).toFixed(1));
+        letter.style.setProperty("--x", `${letter.offsetLeft}px`);
+        letter.style.setProperty("--w", `${width}px`);
       });
+
       frame = requestAnimationFrame(tick);
     };
     frame = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(frame);
+
+    const enter = () => { hovered.current = true; };
+    const leave = () => { hovered.current = false; };
+    word.addEventListener("pointerenter", enter);
+    word.addEventListener("pointerleave", leave);
+    return () => {
+      cancelAnimationFrame(frame);
+      word.removeEventListener("pointerenter", enter);
+      word.removeEventListener("pointerleave", leave);
+    };
   }, []);
 
   return (
-    <span
-      ref={wordRef}
-      className="flow-word"
-      onPointerMove={(event: PointerEvent) => { target.current = event.clientX; }}
-      onPointerLeave={() => { target.current = null; }}
-    >
+    <span ref={wordRef} className="flow-word">
       {SIGNATURE_WORD.split("").map((letter, index) => (
         <span key={index} data-letter aria-hidden="true">{letter}</span>
       ))}
