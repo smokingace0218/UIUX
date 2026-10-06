@@ -76,20 +76,20 @@ Design call: "without the noise" argues for fewer elements, so we removed the "W
 
 ### 6. Borrowing an idea from Butter: a logo that acts out its name
 
-I studied [Butter](https://www.butter.video/): its interface type is plain and quiet, and the wordmark is the one expressive element. On hover the Butter logo melts, so the logo itself shows what the brand is about. I asked for the same idea applied to Flow.
+I studied [Butter](https://www.butter.video/). Its interface type is plain and quiet, and the wordmark is the one expressive element: a heavy, slanted brush script that melts when you hover it. I wanted Flow's logo to work the same way. It took three rounds:
 
-The result: hovering the logo sends a current through it.
+1. **Wave through the letters.** Claude's first version kept Flow's geometric type, with a wave passing through the letters and the icon. I rejected it: it didn't have Butter's character.
+2. **Brush script and a liquid drip.** I asked for Butter's typography and interaction.
+   - Butter's logo is custom lettering, not a font, so Claude rendered ten free brush-script fonts side by side. It picked *Mr Dafoe* as the closest, thickened it with a thin outline, and dropped the circle icon, since Butter uses a wordmark alone.
+   - The first hover distortion looked ragged rather than liquid, so it was changed to a downward drip.
+3. **Letters connected by a drop.** I redirected again: each letter should flow into the next, connected by drops. The final logo works like this:
+   - On hover, a cyan drop hops F → l → o → w and back.
+   - Each letter lights up and gives slightly as the drop lands on it, then hands the light on.
+   - A trailing droplet and a "goo" filter fuse into one stretching drop, so the letters read as joined by liquid.
 
-- The wave inside the mark starts to move, and a swell travels through F-l-o-w, widening, lifting and tinting each letter as it passes.
-- When the pointer leaves, the current runs down smoothly instead of stopping dead.
-- It also plays on keyboard focus, and it's off for reduced motion.
+Testing caught a real bug along the way. The browser's first frame can carry a timestamp slightly earlier than the start time, which made the first time step negative and crashed the animation. Time steps are now never allowed to go backwards.
 
-Two bugs were caught by testing before this shipped:
-
-- **Colour drift:** the wave carried its gradient with it as it moved, so the mark turned all violet. The fix was to make the wave a mask over a fixed gradient: the line moves and its colours stay put.
-- **Slow settle:** the run-down was counted in frames rather than seconds, so on a slow machine (the test machine drew only 5 frames per second) it took much longer than intended. The easing is now timed in seconds.
-
-![Logo on hover, frame by frame](process/09-logo-current-on-hover.png)
+![Logo on hover, frame by frame](process/09-logo-drop-on-hover.png)
 
 ## Where I directed or corrected the AI
 
@@ -99,7 +99,7 @@ Two bugs were caught by testing before this shipped:
 | Expanded "responsive webpage" into a six-section landing page | Cut it to the hero only, matching the brief |
 | Its test said the hover worked | Noticed it didn't in the live preview; the root cause was a CSS inheritance bug |
 | Invented an automation product and its copy | Brought the copy back to the brief's productivity app, tagline and CTA |
-| A static logo | Pointed to Butter's melting wordmark as the reference for a logo that shows the brand's idea |
+| A static logo, then a wave effect in the original type | Pointed to Butter's melting brush wordmark as the reference, then redirected to letters connected by a drop |
 
 ## Reflection
 
